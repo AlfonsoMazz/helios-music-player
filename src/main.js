@@ -97,7 +97,6 @@ async function initializeApp() {
                 default: break;
             }
 
-            // *** ARREGLO DEFINITIVO: REGENERAR SHUFFLE LIST SI ES NECESARIO ***
             if (appState.isShuffled) {
                 appState.shuffledPlaylist = [...sortedTracks].sort(() => Math.random() - 0.5);
             }
@@ -118,10 +117,15 @@ async function initializeApp() {
             
             appState.sidebarControls.updateNowPlayingInfo(trackToRestore);
             
-            appState.mainViewControls.renderPlaylistView(node, name, path, trackToRestore.id);
+            // --- ARREGLO FINAL PARA EL NOMBRE DE LA PLAYLIST ---
+            // Envolvemos la llamada en un setTimeout para asegurar que el DOM
+            // esté completamente listo antes de intentar renderizar la vista.
+            setTimeout(() => {
+                appState.mainViewControls.renderPlaylistView(node, playlistName, path, trackToRestore.id);
 
-            const targetSidebarItem = document.querySelector(`.sidebar-item[data-path='${JSON.stringify(path)}']`);
-            if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');
+                const targetSidebarItem = document.querySelector(`.sidebar-item[data-path='${JSON.stringify(path)}']`);
+                if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');
+            }, 0);
 
         }
     } else if (appState.library && Object.keys(appState.library).length > 0) {

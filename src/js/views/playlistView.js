@@ -21,7 +21,6 @@ function createTrackElement(track, index, appState) {
     trackElement.dataset.trackId = track.id;
     trackElement.dataset.index = index;
 
-    // --- ARREGLO #1: AÑADIR repeatCount="indefinite" PARA EL LOOP INFINITO ---
     const playingIconHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
@@ -182,12 +181,12 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
     mainContentContainer.innerHTML = `
         <main class="flex-1 bg-gradient-to-b from-gray-800 to-black main-view overflow-y-auto relative">
             <div id="playlist-header" class="p-6 flex items-end justify-between">
-                 <div class="flex items-end space-x-6">
+                 <div class="flex items-center space-x-6">
                     <div id="playlist-cover-container" class="w-48 h-48 bg-gray-700 rounded shadow-lg flex-shrink-0">
                         <img src="${coverUrl}" alt="Portada de ${name}">
                     </div>
                     <div class="flex flex-col gap-2">
-                        <h2 id="playlist-name" class="text-5xl font-bold text-white">${name}</h2>
+                        <h2 id="playlist-name" class="text-5xl font-bold text-white"></h2>
                         <p id="playlist-metadata" class="text-sm text-gray-300">${songCount} canciones, ${formatTotalDuration(totalDuration)}</p>
                     </div>
                 </div>
@@ -211,6 +210,10 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                 <div id="track-list" class="mt-4">${placeholdersHTML}</div>
             </div>
         </main>`;
+    
+    // ARREGLO DEL BUG DEL NOMBRE: Asignamos el nombre con JS de forma robusta
+    const playlistNameEl = mainContentContainer.querySelector('#playlist-name');
+    if (playlistNameEl) playlistNameEl.textContent = name;
 
     const placeholders = mainContentContainer.querySelectorAll('.track-item-placeholder');
     const renderedIndices = new Set();
@@ -229,7 +232,6 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                     const trackEl = createTrackElement(track, topDownIndex, appState);
                     placeholder.replaceWith(trackEl);
                     renderedIndices.add(topDownIndex);
-                    // --- ARREGLO #2: VERIFICAR SI HAY QUE RESALTAR ---
                     if (track.id === playingTrackId) {
                         highlightPlayingTrack(track.id, appState);
                     }
@@ -252,7 +254,6 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
             if (track && placeholder) {
                 placeholder.replaceWith(createTrackElement(track, upIndex, appState));
                 renderedIndices.add(upIndex);
-                // --- ARREGLO #2: VERIFICAR SI HAY QUE RESALTAR ---
                 if (track.id === playingTrackId) {
                     highlightPlayingTrack(track.id, appState);
                 }
@@ -267,7 +268,6 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                 if (track && placeholder) {
                     placeholder.replaceWith(createTrackElement(track, downIndex, appState));
                     renderedIndices.add(downIndex);
-                    // --- ARREGLO #2: VERIFICAR SI HAY QUE RESALTAR ---
                     if (track.id === playingTrackId) {
                         highlightPlayingTrack(track.id, appState);
                     }
@@ -285,8 +285,5 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
     if (targetIndex !== -1) {
         ensureTrackIsVisible(targetTrackId, appState);
         activeRenderers.push(requestAnimationFrame(renderTargetOut));
-    } else if (playingTrackId) {
-        // Si no hay target pero la playlist es la activa, resalta la canción en cuanto se renderice
-        // (ya cubierto por la lógica dentro de los renderizadores).
     }
 }
