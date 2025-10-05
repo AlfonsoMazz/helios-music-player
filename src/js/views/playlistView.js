@@ -90,6 +90,10 @@ function showContextMenu(x, y, track, appState) {
         if (appState.queueControls && typeof appState.queueControls.renderQueue === 'function') {
             appState.queueControls.renderQueue(appState);
         }
+        // --- CAMBIO: Se añade esta línea para actualizar la tarjeta "A continuación" ---
+        if (appState.playerControls && typeof appState.playerControls.updateNextInQueueCard === 'function') {
+            appState.playerControls.updateNextInQueueCard();
+        }
         contextMenu.classList.add('hidden');
     };
 }
@@ -211,7 +215,6 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
             </div>
         </main>`;
     
-    // ARREGLO DEL BUG DEL NOMBRE: Asignamos el nombre con JS de forma robusta
     const playlistNameEl = mainContentContainer.querySelector('#playlist-name');
     if (playlistNameEl) playlistNameEl.textContent = name;
 

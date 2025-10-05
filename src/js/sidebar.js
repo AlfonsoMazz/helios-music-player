@@ -3,7 +3,13 @@
 // --- Lógica de la Animación de Texto (Versión Definitiva) ---
 function handleTextOverflow(parentElement) {
     const spanElement = parentElement.querySelector('span');
-    if (!spanElement || !spanElement.innerText || !spanElement.innerText === '...') return;
+    const originalText = parentElement.dataset.originalText;
+
+    if (!spanElement || !originalText || originalText === '...') {
+        spanElement.innerText = '...';
+        spanElement.classList.remove('is-scrolling');
+        return;
+    }
 
     const temporarySpan = document.createElement('span');
     temporarySpan.style.position = 'absolute';
@@ -17,7 +23,7 @@ function handleTextOverflow(parentElement) {
         temporarySpan.style.fontSize = '12px';
     }
     
-    temporarySpan.innerText = spanElement.innerText;
+    temporarySpan.innerText = originalText;
     document.body.appendChild(temporarySpan);
 
     const textWidth = temporarySpan.getBoundingClientRect().width;
@@ -26,7 +32,20 @@ function handleTextOverflow(parentElement) {
     document.body.removeChild(temporarySpan);
 
     const isOverflowing = textWidth > containerWidth;
-    spanElement.classList.toggle('is-scrolling', isOverflowing);
+
+    if (isOverflowing) {
+        // --- CAMBIO: Lógica de duplicación mejorada para un bucle perfecto ---
+        // Definimos un separador amplio para asegurar que haya espacio.
+        const separator = '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'; // Son 6 espacios de no ruptura
+        // Creamos una unidad que contiene el texto y el separador.
+        const displayUnit = `${originalText}${separator}`;
+        // Duplicamos la unidad completa para un ciclo perfecto.
+        spanElement.innerText = `${displayUnit}${displayUnit}`;
+        spanElement.classList.add('is-scrolling');
+    } else {
+        spanElement.innerText = originalText;
+        spanElement.classList.remove('is-scrolling');
+    }
 }
 
 // --- Lógica para Actualizar la UI de "Ahora Suena" ---
@@ -39,14 +58,17 @@ function updateNowPlayingInfo(track) {
 
     if (!track) {
         currentTrackImg.src = 'https://placehold.co/64x64/121212/808080?text=...';
-        currentTrackTitle.querySelector('span').innerText = '...';
-        currentTrackArtist.querySelector('span').innerText = '...';
+        currentTrackTitle.dataset.originalText = '...';
+        currentTrackArtist.dataset.originalText = '...';
+        handleTextOverflow(currentTrackTitle);
+        handleTextOverflow(currentTrackArtist);
         return;
     }
     
     currentTrackImg.src = track.cover;
-    currentTrackTitle.querySelector('span').innerText = track.title;
-    currentTrackArtist.querySelector('span').innerText = track.artist;
+    
+    currentTrackTitle.dataset.originalText = track.title;
+    currentTrackArtist.dataset.originalText = track.artist;
 
     handleTextOverflow(currentTrackTitle);
     handleTextOverflow(currentTrackArtist);

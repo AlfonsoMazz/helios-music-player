@@ -37,17 +37,11 @@
 
         #next-in-queue-container {
             opacity: 0;
-            transition: opacity 0.4s ease-in-out;
+            transition: opacity 0.4s ease-in-out, background-color 0.2s ease-in-out; /* Ajustada transición */
             cursor: pointer;
-            padding: 4px;
-            margin-left: -4px;
         }
         #next-in-queue-container.flex {
             opacity: 1;
-        }
-        #next-in-queue-container:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
         }
 
         /* --- INICIO DE LA MODIFICACIÓN: Estilos para la notificación de error --- */
@@ -99,8 +93,8 @@
             transition: opacity 0.2s ease-in-out;
         }
         .progress-bar-container:hover input[type=range]::-webkit-slider-thumb,
-        .group:hover .volume-control-container input[type=range]::-webkit-slider-thumb,
-        .group:hover #volume-bar::-webkit-slider-thumb {
+        .volume-control-container input[type=range]::-webkit-slider-thumb, /* Cambiado de .group:hover */
+        #volume-bar::-webkit-slider-thumb { /* Cambiado de .group:hover */
             opacity: 1;
         }
 
@@ -299,14 +293,6 @@
             margin-bottom: 0.5rem;
         }
 
-        #volume-bar {
-            width: 0;
-            transition: width 0.2s ease-in-out;
-        }
-        .group:hover #volume-bar {
-            width: 80px;
-        }
-
         .sort-option {
             background: none;
             border: none;
@@ -336,7 +322,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 1rem;
+            padding: 1rem 0.75rem;
             background: linear-gradient(to top, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.7) 60%, transparent);
             pointer-events: none;
             display: flex;
@@ -347,13 +333,12 @@
 
         @keyframes marquee {
             from { transform: translateX(0); }
-            to { transform: translateX(-100%); }
+            to { transform: translateX(-50%); }
         }
 
         .is-scrolling {
             display: inline-block;
-            width: 100%; 
-            padding-left: 100%;
+            white-space: nowrap;
             will-change: transform;
             animation: marquee 15s linear infinite;
         }
