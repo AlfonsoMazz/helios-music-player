@@ -17,7 +17,6 @@
         ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
         .main-view, .sidebar { height: calc(100vh - 90px); }
 
-        /* --- NUEVO: ESTILOS PARA EL LOADER INICIAL --- */
         #app-loader {
             position: fixed;
             top: 0;
@@ -34,6 +33,21 @@
         #app-loader.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+
+        #next-in-queue-container {
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            cursor: pointer;
+            padding: 4px;
+            margin-left: -4px;
+        }
+        #next-in-queue-container.flex {
+            opacity: 1;
+        }
+        #next-in-queue-container:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
         }
 
         input[type=range] {
@@ -284,9 +298,27 @@
             color: #ffffff;
         }
         
+        #now-playing-container {
+            position: relative;
+        }
         #now-playing-container img {
             aspect-ratio: 1 / 1;
             object-fit: cover;
+        }
+        .now-playing-text-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            /* --- AJUSTE DE GRADIENTE: Más oscuro y más alto para mejor contraste --- */
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.7) 60%, transparent);
+            pointer-events: none;
+            /* --- Ajuste de Flexbox para el espacio superior --- */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Alinea el contenido al final (abajo) */
+            min-height: 50%; /* Asegura que el gradiente ocupe al menos la mitad inferior */
         }
 
         @keyframes marquee {
@@ -296,19 +328,13 @@
 
         .is-scrolling {
             display: inline-block;
+            /* --- AJUSTE DE ANCHO: Ahora ocupa el 100% del contenedor --- */
+            width: 100%; 
             padding-left: 100%;
             will-change: transform;
             animation: marquee 15s linear infinite;
         }
         
-        #now-playing-text {
-            position: fixed;
-            bottom: 25px;
-            left: 0.5rem;
-            width: calc(18rem - 1rem);
-            pointer-events: none;
-        }
-
         .now-playing-track .title-text {
             color: #FFBF00 !important;
         }
@@ -363,10 +389,10 @@
         }
 
         .track-item-placeholder {
-            height: 56px; /* Misma altura que un track-item (p-2 + h-10) */
+            height: 56px;
             background-color: rgba(255, 255, 255, 0.04);
             border-radius: 6px;
-            margin-bottom: 4px; /* Coincide con space-y-1 */
+            margin-bottom: 4px;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
@@ -388,7 +414,8 @@
         <svg class="w-12 h-12 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path fill="currentColor" d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></path></svg>
     </div>
 
-    <div id="app-container" class="w-full h-screen flex-col hidden"> <div class="flex flex-1 overflow-hidden">
+    <div id="app-container" class="w-full h-screen flex-col hidden">
+        <div class="flex flex-1 overflow-hidden">
             <div id="sidebar-container"></div>
             <div id="main-content-container" class="flex-1"></div>
         </div>

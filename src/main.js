@@ -54,7 +54,6 @@ async function initializeApp() {
     initLibrary(appState);
     appState.mainViewControls = initMainView(appState); 
     appState.sidebarControls = initSidebar(appState, appState.mainViewControls);
-    appState.queueControls = initQueue(appState);
     
     appState.playerControls = initPlayer(
         audioPlayer, 
@@ -62,6 +61,8 @@ async function initializeApp() {
         appState.sidebarControls.updateNowPlayingInfo,
         appState.mainViewControls.highlightPlayingTrack
     );
+    appState.queueControls = initQueue(appState);
+
 
     const fileInput = document.getElementById('file-input');
     if (fileInput && appState.sidebarControls.renderOrUpdateNode) {
@@ -117,9 +118,6 @@ async function initializeApp() {
             
             appState.sidebarControls.updateNowPlayingInfo(trackToRestore);
             
-            // --- ARREGLO FINAL PARA EL NOMBRE DE LA PLAYLIST ---
-            // Envolvemos la llamada en un setTimeout para asegurar que el DOM
-            // esté completamente listo antes de intentar renderizar la vista.
             setTimeout(() => {
                 appState.mainViewControls.renderPlaylistView(node, playlistName, path, trackToRestore.id);
 
@@ -127,6 +125,10 @@ async function initializeApp() {
                 if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');
             }, 0);
 
+            // --- ARREGLO DEFINITIVO: Notificar al reproductor que actualice la cola AHORA ---
+            if (appState.playerControls) {
+                appState.playerControls.updateNextInQueueCard();
+            }
         }
     } else if (appState.library && Object.keys(appState.library).length > 0) {
         appState.mainViewControls.renderHomeView();

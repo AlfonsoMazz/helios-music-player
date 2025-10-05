@@ -4,19 +4,24 @@
         <div class="flex justify-between items-center p-4">
             <div class="flex items-center gap-3">
                 <button id="home-btn" class="text-gray-400 hover:text-white transition-colors p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 
+24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"></path></svg>
                 </button>
                 <span class="font-bold text-gray-400">Tu Biblioteca</span>
             </div>
             <div class="flex items-center gap-2">
                 <button id="add-library-btn" class="text-gray-400 hover:text-white transition-colors p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path></svg>
+          
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path></svg>
                 </button>
                 <button id="settings-btn" class="text-gray-400 hover:text-white transition-colors p-1">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 
+.33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 
+0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
             </div>
-        </div>
+ 
+       </div>
         <input type="file" id="file-input" webkitdirectory directory multiple class="hidden"/>
 
         <div class="overflow-y-auto px-2 pb-4 flex-1" id="playlist-container">
@@ -25,24 +30,28 @@
 
         <div id="settings-panel" class="hidden absolute top-[65px] left-[10px] right-[10px] bg-[#282828] rounded-lg p-6 shadow-lg z-50">
             <h3 class="text-white font-bold text-lg mb-2">Ajustes</h3>
-            <p class="text-sm text-gray-400 mb-4">Guarda tu carpeta de música para cargarla automáticamente al iniciar.</p>
+     
+       <p class="text-sm text-gray-400 mb-4">Guarda tu carpeta de música para cargarla automáticamente al iniciar.</p>
             <button id="select-folder-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
                 Elegir Carpeta de Música
             </button>
             <p id="current-folder-info" class="text-xs text-gray-500 mt-2 truncate"></p>
         </div>
-    </div>
+   
+ </div>
     
     <div id="now-playing-container" class="p-2">
         <img id="current-track-img" src="https://placehold.co/64x64/121212/808080?text=..." class="w-full h-auto rounded-md">
         
-        <div id="now-playing-text" class="text-center">
-            <p id="current-track-title" class="text-white font-semibold whitespace-nowrap overflow-hidden">
-                <span>...</span>
-            </p>
-            <p id="current-track-artist" class="text-xs whitespace-nowrap overflow-hidden">
-                <span>...</span>
-            </p>
+        <div class="now-playing-text-overlay text-center flex flex-col justify-end items-center">
+            <div> <p id="current-track-title" class="text-white font-semibold whitespace-nowrap overflow-hidden">
+                    <span>...</span>
+                </p>
+                <p 
+id="current-track-artist" class="text-xs whitespace-nowrap overflow-hidden">
+                    <span>...</span>
+                </p>
+            </div>
         </div>
     </div>
 </aside>

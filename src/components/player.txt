@@ -1,22 +1,33 @@
 <footer class="h-[90px] bg-gray-900 border-t border-gray-800 flex items-center justify-between px-4">
-    <div class="w-1/4 min-w-0"></div>
-
+    <div class="w-1/4 min-w-0">
+        <div id="next-in-queue-container" class="hidden items-center space-x-3 text-sm">
+            <img id="next-track-img" src="" class="w-14 h-14 rounded">
+            <div class="truncate">
+                <p class="text-xs text-gray-400">A continuación</p>
+                <p id="next-track-title" class="text-white font-medium truncate">...</p>
+                <p id="next-track-artist" class="text-xs text-gray-400 truncate">...</p>
+            </div>
+        </div>
+    </div>
     <div class="w-1/2 flex flex-col items-center justify-center">
         <div class="flex items-center space-x-4">
             <button id="shuffle-btn" class="text-gray-400 hover:text-white transition-colors w-6 h-6 flex items-center justify-center"></button>
             <button id="prev-btn" class="text-gray-400 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="m16 7-7 5 7 5zm-7 5V7H7v10h2z"/></svg></button>
-            <button id="play-pause-btn" class="bg-white text-black rounded-full p-3 hover:scale-105 transition-transform"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.69L9.54 5.98C8.87 5.55 8 6.03 8 6.82z"/></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
+            <button id="play-pause-btn" class="bg-white 
+text-black rounded-full p-3 hover:scale-105 transition-transform"><svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.69L9.54 5.98C8.87 5.55 8 6.03 8 6.82z"/></svg><svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="hidden"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
             <button id="next-btn" class="text-gray-400 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7v10l7-5zm9 5V7h-2v10h2z"/></svg></button>
             <button id="repeat-btn" class="text-gray-400 hover:text-white transition-colors relative w-6 h-6 flex items-center justify-center"></button>
         </div>
-        <div class="w-full flex items-center space-x-2 mt-2 progress-bar-container"><span id="current-time" class="text-xs w-10 text-right">0:00</span><input id="progress-bar" type="range" min="0" max="100" value="0" class="w-full"><span id="total-time" class="text-xs w-10">0:00</span></div>
+      
+  <div class="w-full flex items-center space-x-2 mt-2 progress-bar-container"><span id="current-time" class="text-xs w-10 text-right">0:00</span><input id="progress-bar" type="range" min="0" max="100" value="0" class="w-full"><span id="total-time" class="text-xs w-10">0:00</span></div>
     </div>
 
     <div class="w-1/4 flex items-center justify-end group pr-4 h-full">
         <div class="flex items-center space-x-4">
             <button id="queue-btn" class="text-gray-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center"></button>
             <button id="eq-btn" class="text-gray-400 hover:text-white transition-colors w-6 h-6 flex items-center justify-center"></button>
-            <div class="flex items-center space-x-2 volume-control-container">
+           
+ <div class="flex items-center space-x-2 volume-control-container">
                 <button id="volume-btn" class="text-gray-400 hover:text-white transition-colors w-6 h-6 flex items-center justify-center"></button>
                 <input id="volume-bar" type="range" min="0" max="100" value="30" class="w-20">
             </div>
@@ -26,13 +37,15 @@
 
 <div id="equalizer-panel" class="hidden absolute bottom-[100px] right-5 bg-[#282828] rounded-lg p-6 shadow-lg transition-all opacity-0 pointer-events-none z-50">
     <div id="eq-bands"></div>
-    <button id="eq-reset-btn" class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">Reset</button>
+    <button id="eq-reset-btn" 
+class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">Reset</button>
 </div>
 <div id="queue-panel">
     <div class="p-4 border-b border-gray-800 flex justify-between items-center">
         <h3 class="text-white font-bold text-lg">A continuación</h3>
         <button id="clear-queue-btn" class="text-gray-400 hover:text-white transition-colors" title="Limpiar cola">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="currentColor" d="M26 20h-6v-2h6zm4 8h-6v-2h6zm-2-4h-6v-2h6z"/><path fill="currentColor" d="M17.003 20a4.895 4.895 0 0 0-2.404-4.173L22 3l-1.73-1l-7.577 13.126a5.699 5.699 0 0 0-5.243 1.503C3.706 20.24 3.996 28.682 4.01 29.04a1 1 0 0 0 1 .96h14.991a1 1 0 0 0 .6-1.8c-3.54-2.656-3.598-8.146-3.598-8.2Zm-5.073-3.003A3.11 3.11 0 0 1 15.004 20c0 .038.002.208.017.469l-5.9-2.624a3.8 3.8 0 0 1 2.809-.848ZM15.45 28A5.2 5.2 0 0 1 14 25h-2a6.5 6.5 0 0 0 .968 3h-2.223A16.617 16.617 0 0 1 10 24H8a17.342 17.342 0 0 0 .665 4H6c.031-1.836.29-5.892 1.803-8.553l7.533 3.35A13.025 13.025 0 0 0 17.596 28Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="currentColor" d="M26 20h-6v-2h6zm4 8h-6v-2h6zm-2-4h-6v-2h6z"/><path fill="currentColor" d="M17.003 20a4.895 4.895 0 0 0-2.404-4.173L22 3l-1.73-1l-7.577 13.126a5.699 5.699 0 0 0-5.243 1.503C3.706 20.24 3.996 28.682 4.01 29.04a1 1 0 0 0 1 .96h14.991a1 1 0 0 0 
+.6-1.8c-3.54-2.656-3.598-8.146-3.598-8.2Zm-5.073-3.003A3.11 3.11 0 0 1 15.004 20c0 .038.002.208.017.469l-5.9-2.624a3.8 3.8 0 0 1 2.809-.848ZM15.45 28A5.2 5.2 0 0 1 14 25h-2a6.5 6.5 0 0 0 .968 3h-2.223A16.617 16.617 0 0 1 10 24H8a17.342 17.342 0 0 0 .665 4H6c.031-1.836.29-5.892 1.803-8.553l7.533 3.35A13.025 13.025 0 0 0 17.596 28Z"/></svg>
         </button>
     </div>
     <div id="queue-list" class="flex-1 overflow-y-auto p-2"></div>
