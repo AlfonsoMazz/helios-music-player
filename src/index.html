@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfonso Music Player</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #535353; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
+        .main-view, .sidebar { height: calc(100vh - 90px); }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: #4d4d4d;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 4px;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            cursor: pointer;
+            margin-top: -5px;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .progress-bar-container:hover input[type=range]::-webkit-slider-thumb,
+        .group:hover .volume-control-container input[type=range]::-webkit-slider-thumb,
+        .group:hover #volume-bar::-webkit-slider-thumb {
+            opacity: 1;
+        }
+
+
+        .active-icon {
+            color: #1DB954 !important;
+        }
+        .amber-icon {
+            color: #FFBF00 !important;
+        }
+
+        #equalizer-panel.visible, #sort-by-panel.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #equalizer-panel {
+            min-width: 450px;
+        }
+        #eq-bands-wrapper {
+            display: flex;
+            align-items: flex-start;
+        }
+        .eq-gain-labels {
+            position: relative;
+            width: 30px;
+            height: 120px;
+            font-size: 10px;
+            color: #a0aec0;
+            text-align: right;
+            margin-right: 8px;
+        }
+        .eq-gain-labels span {
+            position: absolute;
+            right: 0;
+            transform: translateY(-50%);
+        }
+        .eq-gain-labels span:nth-child(1) { top: 0; transform: translateY(0%); }
+        .eq-gain-labels span:nth-child(2) { top: 25%; }
+        .eq-gain-labels span:nth-child(3) { top: 50%; }
+        .eq-gain-labels span:nth-child(4) { top: 75%; }
+        .eq-gain-labels span:nth-child(5) { top: 100%; transform: translateY(-100%); }
+        
+        .eq-sliders-wrapper {
+            display: flex;
+            justify-content: space-around;
+            flex-grow: 1;
+            gap: 8px;
+        }
+        .eq-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type=range].eq-slider {
+            -webkit-appearance: slider-vertical;
+            width: 8px;
+            height: 120px;
+            margin: 0;
+        }
+        .eq-value-input {
+            width: 30px;
+            margin-top: 8px;
+            background-color: transparent;
+            border: none;
+            color: #e0e0e0;
+            text-align: center;
+            font-size: 11px;
+            padding: 2px;
+        }
+        .eq-value-input:focus {
+            outline: 1px solid #535353;
+            border-radius: 2px;
+        }
+        .eq-freq-label {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+
+        #context-menu {
+            position: absolute;
+            z-index: 1000;
+            min-width: 200px;
+            background-color: #282828;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            padding: 5px;
+        }
+        .context-menu-item {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 3px;
+        }
+        .context-menu-item:hover {
+            background-color: #3e3e3e;
+            color: #ffffff;
+        }
+
+        #queue-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: calc(100vh - 90px);
+            background-color: #121212;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            z-index: 999;
+            transition: right 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        #queue-panel.visible {
+            right: 0;
+        }
+        .queue-item.dragging {
+            opacity: 0.5;
+        }
+        .queue-item.drag-over {
+            border-top: 2px solid #3b82f6;
+        }
+        #settings-panel {
+            position: absolute;
+            top: 55px;
+            left: 10px;
+            right: 10px;
+            background-color: #282828;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1050;
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+        
+        #playlist-cover-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .sidebar-item {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .sidebar-item-active {
+            background-color: #374151;
+            color: #ffffff;
+        }
+        .sidebar-item-active .text-gray-400 {
+            color: #ffffff;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #a0aec0;
+        }
+        .loading-container svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            color: #a0aec0;
+        }
+        .loading-container p {
+            font-size: 0.875rem;
+        }
+        
+        .welcome-view {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #6b7280;
+            text-align: center;
+            padding: 2rem;
+        }
+        .welcome-view svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+        }
+        .welcome-view h1 {
+            font-size: 2.25rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        #volume-bar {
+            width: 0;
+            transition: width 0.2s ease-in-out;
+        }
+        .group:hover #volume-bar {
+            width: 80px;
+        }
+
+        .sort-option {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        .sort-option:hover {
+            background-color: #3e3e3e;
+            color: #ffffff;
+        }
+        
+        #now-playing-container img {
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+        }
+
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
+        }
+
+        .is-scrolling {
+            display: inline-block;
+            padding-left: 100%;
+            will-change: transform;
+            animation: marquee 15s linear infinite;
+        }
+        
+        #now-playing-text {
+            position: fixed;
+            bottom: 25px;
+            left: 0.5rem;
+            width: calc(18rem - 1rem);
+            pointer-events: none;
+        }
+
+        .now-playing-track .title-text {
+            color: #FFBF00 !important;
+        }
+        .now-playing-track .play-icon-container {
+            display: none !important;
+        }
+
+        .playing-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFBF00;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .is-rotating {
+            animation: rotate 8s linear infinite;
+        }
+
+        #playlist-controls #search-input {
+            width: 0;
+            opacity: 0;
+            padding: 0;
+            transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+            pointer-events: none;
+        }
+        #playlist-controls.search-active #search-input {
+            width: 250px;
+            opacity: 1;
+            padding: 0.5rem 1rem;
+            pointer-events: auto;
+        }
+        #playlist-controls.search-active #show-search-btn {
+            display: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .track-item-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .track-item-placeholder {
+            height: 56px; /* Misma altura que un track-item (p-2 + h-10) */
+            background-color: rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            margin-bottom: 4px; /* Coincide con space-y-1 */
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: .6;
+            }
+        }
+
+        .active-playlist-mosaic {
+            box-shadow: 0 0 15px 5px rgba(255, 191, 0, 0.6);
+            border: 1px solid rgba(255, 191, 0, 0.5);
+        }
+
+    </style>
+</head>
+<body class="bg-black text-gray-300">
+    <div class="w-full h-screen flex flex-col">
+        <div class="flex flex-1 overflow-hidden">
+            <div id="sidebar-container"></div>
+            <div id="main-content-container" class="flex-1"></div>
+        </div>
+        <footer id="player-container"></footer>
+    </div>
+    <div id="context-menu" class="hidden"></div>
+    <audio id="audio-player"></audio>
+    <script src="main.js" type="module"></script>
+</body>
+</html>
