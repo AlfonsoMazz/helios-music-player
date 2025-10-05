@@ -28,6 +28,9 @@ text-black rounded-full p-3 hover:scale-105 transition-transform"><svg id="play-
 
     <div class="w-1/6 flex items-center justify-end h-full">
         <div class="flex items-center space-x-4">
+            <button id="mini-player-btn" class="text-gray-400 hover:text-white transition-colors w-6 h-6 flex items-center justify-center" title="Mini-reproductor">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/></svg>
+            </button>
             <button id="queue-btn" class="text-gray-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center"></button>
             <button id="eq-btn" class="text-gray-400 hover:text-white transition-colors w-6 h-6 flex items-center justify-center"></button>
             <div class="flex items-center space-x-2 volume-control-container">
@@ -54,4 +57,4 @@ class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 
         </button>
     </div>
     <div id="queue-list" class="flex-1 overflow-y-auto p-2"></div>
-</div> 
+</div>

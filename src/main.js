@@ -5,6 +5,7 @@ import { initQueue } from './js/queue.js';
 import { saveSettings } from './js/settings.js';
 import { initSidebar } from './js/sidebar.js';
 import { initMainView } from './js/mainView.js';
+import { initMiniPlayer } from './js/views/miniPlayer.js'; 
 import { appState } from './js/state.js';
 
 async function loadComponent(componentUrl, elementId) {
@@ -38,7 +39,8 @@ async function initializeApp() {
     await Promise.all([
         loadComponent('./components/sidebar.txt', 'sidebar-container'),
         loadComponent('./components/mainView.txt', 'main-content-container'),
-        loadComponent('./components/player.txt', 'player-container')
+        loadComponent('./components/player.txt', 'player-container'),
+        loadComponent('./components/miniPlayer.txt', 'mini-player-container') 
     ]);
 
     if (loader) loader.classList.add('hidden');
@@ -54,7 +56,8 @@ async function initializeApp() {
     initLibrary(appState);
     appState.mainViewControls = initMainView(appState); 
     appState.sidebarControls = initSidebar(appState, appState.mainViewControls);
-    
+    appState.miniPlayerControls = initMiniPlayer(appState);
+
     appState.playerControls = initPlayer(
         audioPlayer, 
         appState, 
@@ -125,10 +128,13 @@ async function initializeApp() {
                 if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');
             }, 0);
 
-            // --- ARREGLO DEFINITIVO: Notificar al reproductor que actualice la cola AHORA ---
             if (appState.playerControls) {
                 appState.playerControls.updateNextInQueueCard();
             }
+
+            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+            // Le decimos al mini-reproductor que se actualice con el estado restaurado.
+            appState.miniPlayerControls?.update();
         }
     } else if (appState.library && Object.keys(appState.library).length > 0) {
         appState.mainViewControls.renderHomeView();

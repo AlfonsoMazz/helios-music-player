@@ -37,6 +37,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     const nextTrackImg = document.getElementById('next-track-img');
     const nextTrackTitle = document.getElementById('next-track-title');
     const nextTrackArtist = document.getElementById('next-track-artist');
+    const miniPlayerBtn = document.getElementById('mini-player-btn');
 
     const errorToast = document.getElementById('playback-error-toast');
     const errorMessage = document.getElementById('playback-error-message');
@@ -44,7 +45,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
 
     let lastSaveTime = 0;
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     async function handleNextUpTextOverflow(parentElement) {
         await document.fonts.ready;
 
@@ -57,29 +57,21 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
             return;
         }
         
-        // Primero, establece el texto sin animación para poder medirlo correctamente.
         spanElement.innerText = originalText;
         spanElement.classList.remove('is-scrolling');
         
-        // Usamos requestAnimationFrame para asegurar que la medición ocurra justo
-        // antes de que el navegador renderice la pantalla, garantizando medidas precisas.
         requestAnimationFrame(() => {
             const titleContainer = parentElement.parentElement;
-            // Comparamos el ancho total del contenido (scrollWidth) con el ancho visible (clientWidth).
-            // Si el contenido es más grande que el espacio visible, entonces se está desbordando.
             const isOverflowing = titleContainer.scrollWidth > titleContainer.clientWidth;
 
             if (isOverflowing) {
-                // Si hay desbordamiento, aplicamos la animación.
                 const separator = '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
                 const displayUnit = `${originalText}${separator}`;
                 spanElement.innerText = `${displayUnit}${displayUnit}`;
                 spanElement.classList.add('is-scrolling');
             }
-            // Si no hay desbordamiento, no hacemos nada más, ya que el texto estático ya es correcto.
         });
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 
     function triggerSVGAnimation(element) {
         if (!element) return;
@@ -185,19 +177,14 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         audioPlayer.src = URL.createObjectURL(track.file);
         audioPlayer.play().catch(e => console.error("Error al reproducir:", e));
         
-        if (updateSidebarCallback) {
-            updateSidebarCallback(track);
-        }
-        if (updateMainViewCallback) {
-            updateMainViewCallback(track.id);
-        }
-        if (appState.queueControls) {
-            appState.queueControls.renderQueue(appState);
-        }
+        if (updateSidebarCallback) updateSidebarCallback(track);
+        if (updateMainViewCallback) updateMainViewCallback(track.id);
+        if (appState.queueControls) appState.queueControls.renderQueue(appState);
         
         appState.isPlaying = true;
         updatePlayPauseIcon();
         updateNextInQueueCard();
+        appState.miniPlayerControls?.update();
     }
 
     function getNextTrack(direction = 1) {
@@ -300,19 +287,13 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
             nextInQueueContainer.classList.remove('hidden');
             nextInQueueContainer.classList.add('flex');
 
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Llamada directa a la nueva función.
             handleNextUpTextOverflow(nextTrackTitle);
-            // --- FIN DE LA MODIFICACIÓN ---
 
         } else if (nextInQueueContainer) {
             nextTrackTitle.dataset.originalText = '...';
             nextTrackArtist.textContent = '...';
             
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Llamada directa para resetear el estado.
             handleNextUpTextOverflow(nextTrackTitle);
-            // --- FIN DE LA MODIFICACIÓN ---
 
             nextInQueueContainer.classList.add('hidden');
             nextInQueueContainer.classList.remove('flex');
@@ -333,6 +314,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
             if (appState.queueControls) {
                 appState.queueControls.renderQueue(appState);
             }
+            appState.miniPlayerControls?.update();
         }
     }
 
@@ -365,6 +347,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         }
         appState.isPlaying = !appState.isPlaying;
         updatePlayPauseIcon();
+        appState.miniPlayerControls?.update();
     }
     function toggleShuffle() {
        appState.isShuffled = !appState.isShuffled;
@@ -375,18 +358,16 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
        appState.settingsControls.save(appState); 
        triggerSVGAnimation(shuffleBtn);
        updateNextInQueueCard();
-       if (appState.queueControls) {
-            appState.queueControls.renderQueue(appState);
-       }
+       if (appState.queueControls) appState.queueControls.renderQueue(appState);
+       appState.miniPlayerControls?.update();
     }
     function cycleRepeatState() {
         appState.repeatState = (appState.repeatState + 1) % 3;
         appState.settingsControls.save(appState);
         updateRepeatUI();
         updateNextInQueueCard();
-        if (appState.queueControls) {
-            appState.queueControls.renderQueue(appState);
-        }
+        if (appState.queueControls) appState.queueControls.renderQueue(appState);
+        appState.miniPlayerControls?.update();
     }
     
     function updateRepeatUI() {
@@ -441,6 +422,27 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         volumeBar.value = appState.volume * 100;
         updateRangeFill(volumeBar);
         updateVolumeIcon();
+        appState.miniPlayerControls?.update();
+    }
+
+    function setVolume(newVolume) {
+        audioPlayer.volume = newVolume;
+        appState.volume = newVolume;
+        if (newVolume > 0 && appState.isMuted) {
+            appState.isMuted = false;
+        } else if (newVolume === 0 && !appState.isMuted) {
+            appState.isMuted = true;
+        }
+        volumeBar.value = newVolume * 100;
+        updateRangeFill(volumeBar);
+        updateVolumeIcon();
+        appState.settingsControls.save(appState);
+    }
+
+    /** --- NUEVO: Función para buscar en la canción --- */
+    function seekTo(percentage) {
+        if (isNaN(audioPlayer.duration)) return;
+        audioPlayer.currentTime = (percentage / 100) * audioPlayer.duration;
     }
 
     if (nextInQueueContainer) {
@@ -455,6 +457,12 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     shuffleBtn.addEventListener('click', toggleShuffle);
     repeatBtn.addEventListener('click', cycleRepeatState);
     volumeBtn.addEventListener('click', toggleMute);
+    
+    if (miniPlayerBtn) {
+        miniPlayerBtn.addEventListener('click', () => {
+            appState.miniPlayerControls?.open();
+        });
+    }
     
     eqBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -484,7 +492,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         currentTimeEl.textContent = formatTime(currentTime);
         updateRangeFill(progressBar);
         
-        appState.currentTime = currentTime;
+        appState.currentTime = currentTime; // <-- Esta línea es crucial para el mini-reproductor
         const now = Date.now();
         if (now - lastSaveTime > 2000) {
             lastSaveTime = now;
@@ -506,21 +514,10 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
 
     audioPlayer.addEventListener('ended', handleSongEnd);
 
-    progressBar.addEventListener('input', () => {
-        if (isNaN(audioPlayer.duration)) return;
-        audioPlayer.currentTime = (progressBar.value / 100) * audioPlayer.duration;
-    });
+    progressBar.addEventListener('input', () => seekTo(progressBar.value));
     
     volumeBar.addEventListener('input', (e) => { 
-        const newVolume = e.target.value / 100;
-        audioPlayer.volume = newVolume;
-        appState.volume = newVolume;
-        if (newVolume > 0 && appState.isMuted) {
-            appState.isMuted = false;
-        }
-        updateRangeFill(e.target);
-        updateVolumeIcon();
-        appState.settingsControls.save(appState);
+        setVolume(e.target.value / 100);
     });
     
     window.addEventListener('click', (e) => {
@@ -554,6 +551,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     updateVolumeIcon();
     updatePlayPauseIcon();
     updateNextInQueueCard();
+    appState.miniPlayerControls?.update();
 
     return { 
         playTrack: (index) => {
@@ -572,6 +570,14 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
             }
         },
         getUpcomingTracks,
-        updateNextInQueueCard
+        updateNextInQueueCard,
+        togglePlayPause,
+        playNext,
+        playPrev,
+        toggleShuffle,
+        cycleRepeatState,
+        setVolume,
+        toggleMute,
+        seekTo // <-- NUEVO: Exponer la función
     };
 }

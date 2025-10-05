@@ -37,21 +37,20 @@
 
         #next-in-queue-container {
             opacity: 0;
-            transition: opacity 0.4s ease-in-out, background-color 0.2s ease-in-out; /* Ajustada transición */
+            transition: opacity 0.4s ease-in-out, background-color 0.2s ease-in-out;
             cursor: pointer;
         }
         #next-in-queue-container.flex {
             opacity: 1;
         }
 
-        /* --- INICIO DE LA MODIFICACIÓN: Estilos para la notificación de error --- */
         #playback-error-toast {
             position: fixed;
-            bottom: 100px; /* Justo encima de la barra de reproducción de 90px */
+            bottom: 100px;
             left: 50%;
-            transform: translateX(-50%) translateY(20px); /* Posición inicial (abajo) */
-            background-color: #eab308; /* Amarillo de Tailwind (amber-500) */
-            color: #121212; /* Texto oscuro para contraste */
+            transform: translateX(-50%) translateY(20px);
+            background-color: #eab308;
+            color: #121212;
             padding: 0.75rem 1.25rem;
             border-radius: 8px;
             font-weight: 500;
@@ -66,9 +65,8 @@
         }
         #playback-error-toast.visible {
             opacity: 1;
-            transform: translateX(-50%) translateY(0); /* Posición final (arriba) */
+            transform: translateX(-50%) translateY(0);
         }
-        /* --- FIN DE LA MODIFICACIÓN --- */
 
         input[type=range] {
             -webkit-appearance: none;
@@ -93,11 +91,11 @@
             transition: opacity 0.2s ease-in-out;
         }
         .progress-bar-container:hover input[type=range]::-webkit-slider-thumb,
-        .volume-control-container input[type=range]::-webkit-slider-thumb, /* Cambiado de .group:hover */
-        #volume-bar::-webkit-slider-thumb { /* Cambiado de .group:hover */
+        .volume-control-container input[type=range]::-webkit-slider-thumb,
+        #volume-bar::-webkit-slider-thumb,
+        #mp-volume-bar:hover::-webkit-slider-thumb {
             opacity: 1;
         }
-
 
         .active-icon {
             color: #1DB954 !important;
@@ -415,6 +413,131 @@
             border: 1px solid rgba(255, 191, 0, 0.5);
         }
 
+
+        /* =============================================================== */
+        /* =================== MINI-PLAYER STYLES START ================== */
+        /* =============================================================== */
+
+        #mini-player-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            aspect-ratio: 1 / 1;
+            min-width: 280px;
+            min-height: 150px;
+            background-color: #181818;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            z-index: 10000;
+            resize: both;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            display: flex;
+        }
+        #mini-player-container.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #mp-cover-art-main {
+            transition: opacity 0.4s ease-in-out;
+        }
+        #mini-player-container.is-bar-mode #mp-cover-art-main {
+            display: none;
+        }
+
+        #mp-bg-cover {
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        #mini-player-container:hover #mp-bg-cover {
+            opacity: 1;
+        }
+
+        #mp-hover-controls {
+            background: none;
+        }
+        #mini-player-container.is-bar-mode #mp-hover-controls {
+            display: none;
+        }
+        
+        #mini-player-container.is-bar-mode #mp-compact-view {
+            display: flex;
+        }
+        #mp-cover-compact { width: 40px; height: 40px; border-radius: 4px; }
+        #mp-title-compact { font-weight: 600; font-size: 0.875rem; }
+        #mp-artist-compact { font-size: 0.75rem; color: #b3b3b3; }
+        #mini-player-container.is-bar-mode {
+            height: 64px !important;
+            min-height: 56px;
+            aspect-ratio: auto;
+        }
+        
+        /* *** CAMBIO 1: Nueva Animación y Tamaño del Volumen *** */
+        #mp-volume-wrapper > button {
+            opacity: 1;
+            position: absolute;
+            transition: opacity 0.2s ease-in-out;
+        }
+        #mp-volume-wrapper > div {
+            width: 0; /* Oculto por defecto */
+            opacity: 0;
+            pointer-events: none;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+        }
+        #mp-volume-wrapper:hover > button {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #mp-volume-wrapper:hover > div {
+            width: 80px; /* Barra más corta */
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #mp-volume-bar {
+            width: 100%;
+            height: 4px;
+        }
+        #mp-volume-bar::-webkit-slider-thumb {
+            opacity: 1;
+        }
+        
+        /* *** CAMBIO 2: Alineación del Indicador de Progreso *** */
+        #mp-progress-bar-fg > div {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            height: 12px;
+            width: 12px;
+            background-color: white;
+            border-radius: 9999px;
+            /* Clave: Se traslada la mitad de su propio tamaño para centrarse perfectamente */
+            transform: translate(50%, -50%) scale(0);
+            transition: transform 0.2s ease-in-out;
+        }
+        #mp-progress-container:hover #mp-progress-bar-fg > div {
+            transform: translate(50%, -50%) scale(1);
+        }
+        #mp-progress-bar-bg {
+             transition: height 0.2s ease-in-out;
+        }
+        #mp-progress-container:hover #mp-progress-bar-bg {
+            height: 6px;
+        }
+        #mp-progress-bar-fg {
+            transition: none;
+        }
+
+        /* =============================================================== */
+        /* =================== MINI-PLAYER STYLES END ==================== */
+        /* =============================================================== */
+
     </style>
 </head>
 <body class="bg-black text-gray-300">
@@ -436,6 +559,9 @@
     </div>
 
     <div id="context-menu" class="hidden"></div>
+
+    <div id="mini-player-container" class="hidden"></div>
+
     <audio id="audio-player"></audio>
     <script src="main.js" type="module"></script>
 </body>
