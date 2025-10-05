@@ -136,7 +136,6 @@ export function initMainView(appState) {
         ensureTrackIsVisible(currentTrack.id, appState);
     }
 
-    // LÓGICA DE NAVEGACIÓN SIMPLIFICADA
     function navigateToTrack(trackId) {
         if (!appState.playingContext || !appState.playingContext.path) return;
 
@@ -165,9 +164,14 @@ export function initMainView(appState) {
             }
         }
 
-        // Simplemente llamamos a renderPlaylistView y le pasamos el ID de la canción.
-        // La vista ahora se encarga de toda la lógica de renderizado y scroll.
         renderPlaylistView(node, name, path, appState, trackId);
+        
+        // --- ARREGLO FINAL PARA EL RESALTADO ---
+        // Esperamos un instante para dar tiempo al renderizado prioritario
+        // a crear el elemento, y luego lo resaltamos.
+        setTimeout(() => {
+            highlightPlayingTrack(trackId, appState);
+        }, 100); // 100ms es un retraso seguro e imperceptible
     }
 
     return {

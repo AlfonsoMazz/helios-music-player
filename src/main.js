@@ -41,7 +41,6 @@ async function initializeApp() {
         loadComponent('./components/player.txt', 'player-container')
     ]);
 
-    // Ocultamos el loader y mostramos la app principal
     if (loader) loader.classList.add('hidden');
     if (appContainer) {
         appContainer.classList.remove('hidden');
@@ -68,12 +67,12 @@ async function initializeApp() {
     if (fileInput && appState.sidebarControls.renderOrUpdateNode) {
         fileInput.addEventListener('change', async (event) => {
             appState.isScanning = true;
-            appState.sidebarControls.renderSidebar(); // Llama para mostrar el estado de escaneo
+            appState.sidebarControls.renderSidebar();
 
             await handleFileSelection(event, appState, appState.sidebarControls.renderOrUpdateNode);
             
             appState.isScanning = false;
-            appState.sidebarControls.renderSidebar(); // Llama para quitar el estado de escaneo
+            appState.sidebarControls.renderSidebar();
         });
     }
 
@@ -87,12 +86,28 @@ async function initializeApp() {
             const playlistName = path[path.length - 1];
             const trackToRestore = node._tracks[trackIndex];
             
+            const playlistPath = JSON.stringify(path);
+            const sortBy = appState.playlistSortOrders[playlistPath] || 'default';
+            let sortedTracks = [...node._tracks];
+            switch (sortBy) {
+                case 'alpha-asc': sortedTracks.sort((a, b) => a.title.localeCompare(b.title)); break;
+                case 'alpha-desc': sortedTracks.sort((a, b) => b.title.localeCompare(a.title)); break;
+                case 'date-desc': sortedTracks.sort((a, b) => b.dateAdded - a.dateAdded); break;
+                case 'date-asc': sortedTracks.sort((a, b) => a.dateAdded - b.dateAdded); break;
+                default: break;
+            }
+
+            // *** ARREGLO DEFINITIVO: REGENERAR SHUFFLE LIST SI ES NECESARIO ***
+            if (appState.isShuffled) {
+                appState.shuffledPlaylist = [...sortedTracks].sort(() => Math.random() - 0.5);
+            }
+            
             appState.playingContext = {
                 node: node,
                 name: playlistName,
                 path: path,
                 trackIndex: trackIndex,
-                tracks: [...node._tracks],
+                tracks: sortedTracks,
                 originalTracks: [...node._tracks]
             };
             appState.currentTime = currentTime;
@@ -103,7 +118,7 @@ async function initializeApp() {
             
             appState.sidebarControls.updateNowPlayingInfo(trackToRestore);
             
-            appState.mainViewControls.renderPlaylistView(node, playlistName, path, null, trackToRestore.id);
+            appState.mainViewControls.renderPlaylistView(node, name, path, trackToRestore.id);
 
             const targetSidebarItem = document.querySelector(`.sidebar-item[data-path='${JSON.stringify(path)}']`);
             if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');

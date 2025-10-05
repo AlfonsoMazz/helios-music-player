@@ -34,7 +34,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     const eqBandsContainer = document.getElementById('eq-bands');
     const eqResetBtn = document.getElementById('eq-reset-btn');
 
-    let lastSaveTime = 0; // Para la optimización del guardado
+    let lastSaveTime = 0;
 
     function triggerSVGAnimation(element) {
         if (!element) return;
@@ -154,17 +154,23 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
             return { track: null, newIndex: -1 };
         }
 
-        const currentPlaylist = appState.isShuffled ? appState.shuffledPlaylist : appState.playingContext.tracks;
-        const currentTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
+        // --- ARREGLO DE ROBUSTEZ ---
+        // Filtramos cualquier posible entrada 'undefined' antes de usar la lista
+        const validOriginalTracks = appState.playingContext.originalTracks.filter(t => t);
+        if (validOriginalTracks.length === 0) return { track: null, newIndex: -1 };
         
-        let currentIndexInList = -1;
-        if (currentTrack) {
-            currentIndexInList = currentPlaylist.findIndex(t => t.id === currentTrack.id);
-        }
+        let currentPlaylist = (appState.isShuffled ? appState.shuffledPlaylist : appState.playingContext.tracks).filter(t => t);
+        if (currentPlaylist.length === 0) return { track: null, newIndex: -1 };
+
+
+        const currentTrack = validOriginalTracks[appState.playingContext.trackIndex];
+        if (!currentTrack) return { track: null, newIndex: -1 };
+        
+        let currentIndexInList = currentPlaylist.findIndex(t => t && t.id === currentTrack.id);
         
         if (currentIndexInList === -1 && currentPlaylist.length > 0) {
              const nextTrack = direction === 1 ? currentPlaylist[0] : currentPlaylist[currentPlaylist.length - 1];
-             const newIndex = appState.playingContext.originalTracks.findIndex(t => t.id === nextTrack.id);
+             const newIndex = validOriginalTracks.findIndex(t => t && t.id === nextTrack.id);
              return { track: nextTrack, newIndex };
         }
 
@@ -172,24 +178,22 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
 
         if (nextIndexInList >= currentPlaylist.length) {
             if (appState.repeatState === 1) {
-                const nextTrack = currentPlaylist[0];
-                const newIndex = appState.playingContext.originalTracks.findIndex(t => t.id === nextTrack.id);
-                return { track: nextTrack, newIndex };
+                nextIndexInList = 0;
+            } else {
+                return { track: null, newIndex: -1 };
             }
-            return { track: null, newIndex: -1 };
         }
 
         if (nextIndexInList < 0) {
             if (appState.repeatState === 1) {
-                const nextTrack = currentPlaylist[currentPlaylist.length - 1];
-                const newIndex = appState.playingContext.originalTracks.findIndex(t => t.id === nextTrack.id);
-                return { track: nextTrack, newIndex };
+                nextIndexInList = currentPlaylist.length - 1;
+            } else {
+                return { track: null, newIndex: -1 };
             }
-            return { track: null, newIndex: -1 };
         }
         
         const nextTrack = currentPlaylist[nextIndexInList];
-        const newIndex = appState.playingContext.originalTracks.findIndex(t => t.id === nextTrack.id);
+        const newIndex = validOriginalTracks.findIndex(t => t && t.id === nextTrack.id);
         return { track: nextTrack, newIndex };
     }
 
@@ -340,10 +344,9 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         currentTimeEl.textContent = formatTime(currentTime);
         updateRangeFill(progressBar);
         
-        // --- NUEVA LÓGICA DE GUARDADO CONTINUO ---
         appState.currentTime = currentTime;
         const now = Date.now();
-        if (now - lastSaveTime > 2000) { // Guarda cada 2 segundos
+        if (now - lastSaveTime > 2000) {
             lastSaveTime = now;
             appState.settingsControls.save(appState);
         }

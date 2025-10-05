@@ -17,27 +17,27 @@ function createTrackElement(track, index, appState) {
     const trackElement = document.createElement('div');
     const hasError = track.hasError;
 
-    // Se añade la clase de animación para el efecto de difuminado
     trackElement.className = `grid grid-cols-[auto_4fr_3fr_auto] gap-4 items-center p-2 rounded-md group track-item track-item-fade-in ${hasError ? 'opacity-50' : 'hover:bg-white/10'}`;
     trackElement.dataset.trackId = track.id;
     trackElement.dataset.index = index;
 
+    // --- ARREGLO #1: AÑADIR repeatCount="indefinite" PARA EL LOOP INFINITO ---
     const playingIconHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
-                <animateTransform attributeName="transform" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
-                <animateTransform additive="sum" attributeName="transform" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="scale" values="0;1"/>
-                <animate attributeName="opacity" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" values="1;0"/>
+                <animateTransform attributeName="transform" type="translate" values="12 12;0 0" dur="1.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines=".52,.6,.25,.99"/>
+                <animateTransform attributeName="transform" type="scale" values="0;1" dur="1.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines=".52,.6,.25,.99" additive="sum"/>
+                <animate attributeName="opacity" values="1;0" dur="1.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines=".52,.6,.25,.99"/>
             </path>
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
-                <animateTransform attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
-                <animateTransform additive="sum" attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="scale" values="0;1"/>
-                <animate attributeName="opacity" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" values="1;0"/>
+                <animateTransform attributeName="transform" type="translate" values="12 12;0 0" dur="1.2s" repeatCount="indefinite" begin="0.4s" calcMode="spline" keySplines=".52,.6,.25,.99"/>
+                <animateTransform attributeName="transform" type="scale" values="0;1" dur="1.2s" repeatCount="indefinite" begin="0.4s" calcMode="spline" keySplines=".52,.6,.25,.99" additive="sum"/>
+                <animate attributeName="opacity" values="1;0" dur="1.2s" repeatCount="indefinite" begin="0.4s" calcMode="spline" keySplines=".52,.6,.25,.99"/>
             </path>
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
-                <animateTransform attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
-                <animateTransform additive="sum" attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="scale" values="0;1"/>
-                <animate attributeName="opacity" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" values="1;0"/>
+                <animateTransform attributeName="transform" type="translate" values="12 12;0 0" dur="1.2s" repeatCount="indefinite" begin="0.8s" calcMode="spline" keySplines=".52,.6,.25,.99"/>
+                <animateTransform attributeName="transform" type="scale" values="0;1" dur="1.2s" repeatCount="indefinite" begin="0.8s" calcMode="spline" keySplines=".52,.6,.25,.99" additive="sum"/>
+                <animate attributeName="opacity" values="1;0" dur="1.2s" repeatCount="indefinite" begin="0.8s" calcMode="spline" keySplines=".52,.6,.25,.99"/>
             </path>
         </svg>`;
 
@@ -140,9 +140,7 @@ export function ensureTrackIsVisible(trackId, appState) {
     const trackElement = document.querySelector(`.track-item[data-track-id="${trackId}"]`);
     if (trackElement) {
         trackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        highlightPlayingTrack(trackId, appState);
     } else {
-        // Si el elemento real no existe, busca su placeholder y haz scroll a ese
         const trackIndex = appState.viewingContext.tracks.findIndex(t => t.id === trackId);
         if (trackIndex !== -1) {
             const placeholder = document.querySelector(`.track-item-placeholder[data-index="${trackIndex}"]`);
@@ -154,7 +152,7 @@ export function ensureTrackIsVisible(trackId, appState) {
 }
 
 export function renderPlaylistView(node, name, path, appState, targetTrackId = null) {
-    cancelPreviousRenders(); // Detiene cualquier renderizado anterior
+    cancelPreviousRenders();
     const mainContentContainer = document.getElementById('main-content-container');
     if (!mainContentContainer) return;
     
@@ -163,7 +161,6 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
     const playlistPath = JSON.stringify(path);
     const sortBy = appState.playlistSortOrders[playlistPath] || 'default';
     let tracksToRender = [...node._tracks];
-    // Lógica de ordenación...
     switch (sortBy) {
         case 'alpha-asc': tracksToRender.sort((a, b) => a.title.localeCompare(b.title)); break;
         case 'alpha-desc': tracksToRender.sort((a, b) => b.title.localeCompare(a.title)); break;
@@ -177,7 +174,6 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
     const totalDuration = tracksToRender.reduce((sum, track) => sum + (track.duration || 0), 0);
     const coverUrl = songCount > 0 ? tracksToRender[0].cover : 'https://placehold.co/192x192/121212/808080?text=Playlist';
     
-    // --- PASO 1: RENDERIZADO INSTANTÁNEO DE LA ESTRUCTURA Y PLACEHOLDERS ---
     let placeholdersHTML = '';
     for (let i = 0; i < songCount; i++) {
         placeholdersHTML += `<div class="track-item-placeholder" data-index="${i}"></div>`;
@@ -216,18 +212,14 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
             </div>
         </main>`;
 
-    const trackListEl = document.getElementById('track-list');
-    const placeholders = trackListEl.querySelectorAll('.track-item-placeholder');
-    const renderedIndices = new Set(); // Para no renderizar el mismo item dos veces
+    const placeholders = mainContentContainer.querySelectorAll('.track-item-placeholder');
+    const renderedIndices = new Set();
+    const playingTrackId = appState.playingContext?.originalTracks?.[appState.playingContext.trackIndex]?.id;
 
-    // --- PASO 2: INICIAR LOS RENDERIZADORES ASÍNCRONOS ---
-
-    // Renderizador 1: Cascada de arriba a abajo
     let topDownIndex = 0;
     function renderTopDown() {
-        if (topDownIndex >= tracksToRender.length) return; // Terminado
+        if (topDownIndex >= tracksToRender.length) return;
 
-        // Renderiza unos pocos tracks por frame para mayor fluidez
         const batchSize = 3;
         for (let i = 0; i < batchSize && topDownIndex < tracksToRender.length; i++) {
             if (!renderedIndices.has(topDownIndex)) {
@@ -237,6 +229,10 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                     const trackEl = createTrackElement(track, topDownIndex, appState);
                     placeholder.replaceWith(trackEl);
                     renderedIndices.add(topDownIndex);
+                    // --- ARREGLO #2: VERIFICAR SI HAY QUE RESALTAR ---
+                    if (track.id === playingTrackId) {
+                        highlightPlayingTrack(track.id, appState);
+                    }
                 }
             }
             topDownIndex++;
@@ -244,35 +240,37 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
         activeRenderers.push(requestAnimationFrame(renderTopDown));
     }
 
-    // Renderizador 2: Prioritario, del centro hacia afuera
     const targetIndex = targetTrackId ? tracksToRender.findIndex(t => t.id === targetTrackId) : -1;
     let offset = 0;
     function renderTargetOut() {
         if (targetIndex === -1) return;
         
-        let renderedSomething = false;
-        // Renderiza el de arriba (target - offset)
-        const upIndex = targetIndex - offset;
+        let upIndex = targetIndex - offset;
         if (upIndex >= 0 && !renderedIndices.has(upIndex)) {
             const track = tracksToRender[upIndex];
             const placeholder = placeholders[upIndex];
             if (track && placeholder) {
                 placeholder.replaceWith(createTrackElement(track, upIndex, appState));
                 renderedIndices.add(upIndex);
-                renderedSomething = true;
+                // --- ARREGLO #2: VERIFICAR SI HAY QUE RESALTAR ---
+                if (track.id === playingTrackId) {
+                    highlightPlayingTrack(track.id, appState);
+                }
             }
         }
         
-        // Renderiza el de abajo (target + offset), si no es el mismo
         if (offset > 0) {
-            const downIndex = targetIndex + offset;
+            let downIndex = targetIndex + offset;
             if (downIndex < tracksToRender.length && !renderedIndices.has(downIndex)) {
                 const track = tracksToRender[downIndex];
                 const placeholder = placeholders[downIndex];
                 if (track && placeholder) {
                     placeholder.replaceWith(createTrackElement(track, downIndex, appState));
                     renderedIndices.add(downIndex);
-                    renderedSomething = true;
+                    // --- ARREGLO #2: VERIFICAR SI HAY QUE RESALTAR ---
+                    if (track.id === playingTrackId) {
+                        highlightPlayingTrack(track.id, appState);
+                    }
                 }
             }
         }
@@ -283,16 +281,12 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
         }
     }
 
-    // Inicia ambos renderizadores
     activeRenderers.push(requestAnimationFrame(renderTopDown));
     if (targetIndex !== -1) {
         ensureTrackIsVisible(targetTrackId, appState);
         activeRenderers.push(requestAnimationFrame(renderTargetOut));
-    }
-
-    // Resalta la canción activa si la playlist que se muestra es la que está sonando
-    if (appState.playingContext?.path && JSON.stringify(appState.playingContext.path) === playlistPath) {
-        const activeTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
-        if (activeTrack) highlightPlayingTrack(activeTrack.id, appState);
+    } else if (playingTrackId) {
+        // Si no hay target pero la playlist es la activa, resalta la canción en cuanto se renderice
+        // (ya cubierto por la lógica dentro de los renderizadores).
     }
 }
