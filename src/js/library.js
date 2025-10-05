@@ -61,15 +61,16 @@ async function parseTrackMetadata(file) {
     });
 }
 
-async function processAndStoreLibrary(files, appState) {
+async function processAndStoreLibrary(files, appState, onNodeReadyCallback) {
     const playlistContainer = document.getElementById('playlist-container');
     if (playlistContainer) {
         playlistContainer.innerHTML = `<div class="loading-container">${loadingSVG}<p id="loading-status-text">Analizando archivos...</p></div>`;
     }
-
     const loadingStatusText = document.getElementById('loading-status-text');
+    
     const libraryTree = {};
     let processedCount = 0;
+    const totalFiles = files.length;
 
     for (const file of files) {
         const pathParts = file.webkitRelativePath.split('/');
@@ -82,51 +83,68 @@ async function processAndStoreLibrary(files, appState) {
             parentNode = parentNode._items[folderName];
         }
         const trackData = await parseTrackMetadata(file);
-        // Omitimos los archivos que no son de audio para el procesamiento de metadatos
         if (trackData) {
             parentNode._tracks.push(trackData);
         }
         processedCount++;
         if (loadingStatusText) {
-            loadingStatusText.textContent = `Procesando ${processedCount} de ${files.length} canciones...`;
+            loadingStatusText.textContent = `Procesando ${processedCount} de ${totalFiles} canciones...`;
         }
     }
     
     appState.library = libraryTree;
-    
-    // Guarda en caché después de procesar
-    await saveLibraryToCache(libraryTree);
+    if(playlistContainer) playlistContainer.innerHTML = '';
 
-    if (appState.sidebarControls && appState.sidebarControls.renderSidebar) {
-        appState.sidebarControls.renderSidebar();
+    function traverseAndNotify(node, currentPath) {
+        const sortedKeys = Object.keys(node._items).sort((a, b) => a.localeCompare(b));
+        for (const key of sortedKeys) {
+            const childNode = node._items[key];
+            const newPath = [...currentPath, key];
+            
+            if (onNodeReadyCallback) {
+                onNodeReadyCallback(newPath, childNode);
+            }
+            
+            if (Object.keys(childNode._items).length > 0) {
+                traverseAndNotify(childNode, newPath);
+            }
+        }
     }
+
+    traverseAndNotify({ _items: appState.library }, []);
+    
+    await saveLibraryToCache(libraryTree);
     
     console.log("Procesamiento de biblioteca finalizado y guardado en caché.");
 }
 
-async function handleFileSelection(event, appState) {
+export async function handleFileSelection(event, appState, onNodeReadyCallback) {
     const files = Array.from(event.target.files).filter(file => /\.(mp3|wav|ogg|flac|m4a)$/i.test(file.name));
     if (files.length === 0) return;
-    await processAndStoreLibrary(files, appState);
+    
+    appState.library = {};
+    if (appState.sidebarControls) {
+        appState.sidebarControls.renderSidebar();
+    }
+    
+    await processAndStoreLibrary(files, appState, onNodeReadyCallback);
 }
 
 export async function loadLibrary(appState) {
+    // AÑADIMOS LOGS PARA DIAGNÓSTICO
+    console.log("Intentando cargar la biblioteca desde la caché...");
     const cachedLibrary = await loadLibraryFromCache();
     if (cachedLibrary && Object.keys(cachedLibrary).length > 0) {
+        console.log("%c¡Éxito! Biblioteca encontrada y cargada desde la caché.", "color: lightgreen; font-weight: bold;", cachedLibrary);
         appState.library = cachedLibrary;
         if (appState.sidebarControls && appState.sidebarControls.renderSidebar) {
             appState.sidebarControls.renderSidebar();
         }
     } else {
-        // Si no hay caché, la interfaz ya incita al usuario a añadir una biblioteca
-        console.log("No hay biblioteca en caché, esperando selección del usuario.");
+        console.log("No se encontró ninguna biblioteca en la caché. Esperando selección del usuario.");
     }
 }
 
 export function initLibrary(appState) {
-    const fileInput = document.getElementById('file-input');
-    if (fileInput) {
-        fileInput.addEventListener('change', (event) => handleFileSelection(event, appState));
-    }
     console.log('Módulo de la biblioteca inicializado.');
 }

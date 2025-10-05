@@ -1,6 +1,14 @@
 // src/js/views/playlistView.js
 
-let renderCancelled = false;
+let activeRenderers = [];
+
+/**
+ * Detiene todas las colas de renderizado activas de la vista anterior.
+ */
+function cancelPreviousRenders() {
+    activeRenderers.forEach(id => cancelAnimationFrame(id));
+    activeRenderers = [];
+}
 
 /**
  * Crea el elemento DOM para una sola canción.
@@ -9,23 +17,25 @@ function createTrackElement(track, index, appState) {
     const trackElement = document.createElement('div');
     const hasError = track.hasError;
 
-    trackElement.className = `grid grid-cols-[auto_4fr_3fr_auto] gap-4 items-center p-2 rounded-md group track-item ${hasError ? 'opacity-50' : 'hover:bg-white/10'}`;
+    // Se añade la clase de animación para el efecto de difuminado
+    trackElement.className = `grid grid-cols-[auto_4fr_3fr_auto] gap-4 items-center p-2 rounded-md group track-item track-item-fade-in ${hasError ? 'opacity-50' : 'hover:bg-white/10'}`;
     trackElement.dataset.trackId = track.id;
+    trackElement.dataset.index = index;
 
     const playingIconHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
-                <animateTransform id="svgSpinnersPulseRings30" attributeName="transform" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
+                <animateTransform attributeName="transform" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
                 <animateTransform additive="sum" attributeName="transform" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="scale" values="0;1"/>
                 <animate attributeName="opacity" begin="0;svgSpinnersPulseRings32.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" values="1;0"/>
             </path>
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
-                <animateTransform id="svgSpinnersPulseRings31" attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
+                <animateTransform attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
                 <animateTransform additive="sum" attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="scale" values="0;1"/>
                 <animate attributeName="opacity" begin="svgSpinnersPulseRings30.begin+0.4s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" values="1;0"/>
             </path>
             <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z" transform="matrix(0 0 0 0 12 12)">
-                <animateTransform id="svgSpinnersPulseRings32" attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
+                <animateTransform attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="translate" values="12 12;0 0"/>
                 <animateTransform additive="sum" attributeName="transform" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" type="scale" values="0;1"/>
                 <animate attributeName="opacity" begin="svgSpinnersPulseRings30.begin+0.8s" calcMode="spline" dur="1.2s" keySplines=".52,.6,.25,.99" values="1;0"/>
             </path>
@@ -86,29 +96,25 @@ function showContextMenu(x, y, track, appState) {
 }
 
 function clearAllPlayingHighlights() {
-    const allPlayingTracks = document.querySelectorAll('.now-playing-track');
-    allPlayingTracks.forEach(trackEl => {
+    document.querySelectorAll('.now-playing-track').forEach(trackEl => {
         trackEl.classList.remove('now-playing-track');
-        const trackNumber = trackEl.querySelector('.track-number');
-        const playingIcon = trackEl.querySelector('.playing-icon');
-        if (trackNumber) trackNumber.classList.remove('hidden');
-        if (playingIcon) playingIcon.classList.add('hidden');
+        trackEl.querySelector('.track-number')?.classList.remove('hidden');
+        trackEl.querySelector('.playing-icon')?.classList.add('hidden');
     });
 }
 
 export function highlightPlayingTrack(trackId, appState) {
     clearAllPlayingHighlights();
-    if (!trackId || !appState.playingContext || !appState.playingContext.path || !appState.viewingContext) return;
+    if (!trackId || !appState.playingContext?.path || !appState.viewingContext) return;
+
     const playingPath = JSON.stringify(appState.playingContext.path);
     const viewingPath = JSON.stringify(appState.viewingContext.path);
     if (playingPath === viewingPath) {
-        const currentlyPlaying = document.querySelector(`[data-track-id="${trackId}"]`);
+        const currentlyPlaying = document.querySelector(`.track-item[data-track-id="${trackId}"]`);
         if (currentlyPlaying) {
             currentlyPlaying.classList.add('now-playing-track');
-            const newTrackNumber = currentlyPlaying.querySelector('.track-number');
-            const newPlayingIcon = currentlyPlaying.querySelector('.playing-icon');
-            if (newTrackNumber) newTrackNumber.classList.add('hidden');
-            if (newPlayingIcon) newPlayingIcon.classList.remove('hidden');
+            currentlyPlaying.querySelector('.track-number')?.classList.add('hidden');
+            currentlyPlaying.querySelector('.playing-icon')?.classList.remove('hidden');
         }
     }
 }
@@ -131,25 +137,33 @@ function formatTotalDuration(totalSeconds) {
 }
 
 export function ensureTrackIsVisible(trackId, appState) {
-    const trackElement = document.querySelector(`#track-list .track-item[data-track-id="${trackId}"]`);
+    const trackElement = document.querySelector(`.track-item[data-track-id="${trackId}"]`);
     if (trackElement) {
         trackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         highlightPlayingTrack(trackId, appState);
+    } else {
+        // Si el elemento real no existe, busca su placeholder y haz scroll a ese
+        const trackIndex = appState.viewingContext.tracks.findIndex(t => t.id === trackId);
+        if (trackIndex !== -1) {
+            const placeholder = document.querySelector(`.track-item-placeholder[data-index="${trackIndex}"]`);
+            if (placeholder) {
+                placeholder.scrollIntoView({ behavior: 'auto', block: 'center' });
+            }
+        }
     }
 }
 
-export function renderPlaylistView(node, name, path, appState, onCompleteCallback, targetTrackId = null) {
+export function renderPlaylistView(node, name, path, appState, targetTrackId = null) {
+    cancelPreviousRenders(); // Detiene cualquier renderizado anterior
     const mainContentContainer = document.getElementById('main-content-container');
     if (!mainContentContainer) return;
-
-    renderCancelled = true;
-    clearAllPlayingHighlights();
-
+    
     appState.viewingContext = { tracks: [], originalTracks: [...node._tracks], node, name, path };
 
     const playlistPath = JSON.stringify(path);
     const sortBy = appState.playlistSortOrders[playlistPath] || 'default';
     let tracksToRender = [...node._tracks];
+    // Lógica de ordenación...
     switch (sortBy) {
         case 'alpha-asc': tracksToRender.sort((a, b) => a.title.localeCompare(b.title)); break;
         case 'alpha-desc': tracksToRender.sort((a, b) => b.title.localeCompare(a.title)); break;
@@ -159,14 +173,26 @@ export function renderPlaylistView(node, name, path, appState, onCompleteCallbac
     }
     appState.viewingContext.tracks = tracksToRender;
 
+    const songCount = tracksToRender.length;
+    const totalDuration = tracksToRender.reduce((sum, track) => sum + (track.duration || 0), 0);
+    const coverUrl = songCount > 0 ? tracksToRender[0].cover : 'https://placehold.co/192x192/121212/808080?text=Playlist';
+    
+    // --- PASO 1: RENDERIZADO INSTANTÁNEO DE LA ESTRUCTURA Y PLACEHOLDERS ---
+    let placeholdersHTML = '';
+    for (let i = 0; i < songCount; i++) {
+        placeholdersHTML += `<div class="track-item-placeholder" data-index="${i}"></div>`;
+    }
+
     mainContentContainer.innerHTML = `
         <main class="flex-1 bg-gradient-to-b from-gray-800 to-black main-view overflow-y-auto relative">
             <div id="playlist-header" class="p-6 flex items-end justify-between">
-                <div class="flex items-end space-x-6">
-                    <div id="playlist-cover-container" class="w-48 h-48 bg-gray-700 rounded shadow-lg flex-shrink-0"></div>
+                 <div class="flex items-end space-x-6">
+                    <div id="playlist-cover-container" class="w-48 h-48 bg-gray-700 rounded shadow-lg flex-shrink-0">
+                        <img src="${coverUrl}" alt="Portada de ${name}">
+                    </div>
                     <div class="flex flex-col gap-2">
-                        <h2 id="playlist-name" class="text-5xl font-bold text-white"></h2>
-                        <p id="playlist-metadata" class="text-sm text-gray-300"></p>
+                        <h2 id="playlist-name" class="text-5xl font-bold text-white">${name}</h2>
+                        <p id="playlist-metadata" class="text-sm text-gray-300">${songCount} canciones, ${formatTotalDuration(totalDuration)}</p>
                     </div>
                 </div>
             </div>
@@ -174,20 +200,11 @@ export function renderPlaylistView(node, name, path, appState, onCompleteCallbac
                 <div id="playlist-controls" class="mb-4 flex items-center justify-end gap-4 relative">
                     <input type="text" id="search-input" class="bg-gray-700 text-white rounded-full focus:outline-none" spellcheck="false" autocomplete="off">
                     <div id="default-controls" class="flex items-center gap-4">
-                        <button id="show-search-btn" class="text-gray-400 hover:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                        </button>
+                        <button id="show-search-btn" class="text-gray-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg></button>
                         <div class="relative">
-                            <button id="playlist-sort-btn" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17 4V2.067a.5.5 0 0 1 .82-.384l4.12 3.433a.5.5 0 0 1-.321.884H2V4h15ZM2 18h20v2H2v-2Zm0-7h20v2H2v-2Z"/></svg>
-                                <span>Ordenar</span>
-                            </button>
+                            <button id="playlist-sort-btn" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17 4V2.067a.5.5 0 0 1 .82-.384l4.12 3.433a.5.5 0 0 1-.321.884H2V4h15ZM2 18h20v2H2v-2Zm0-7h20v2H2v-2Z"/></svg><span>Ordenar</span></button>
                             <div id="playlist-sort-panel" class="hidden absolute top-full right-0 mt-2 w-48 bg-[#282828] rounded-lg shadow-lg z-50 p-2">
-                                <button class="sort-option" data-sort-by="default">Orden por defecto</button>
-                                <button class="sort-option" data-sort-by="alpha-asc">Título (A-Z)</button>
-                                <button class="sort-option" data-sort-by="alpha-desc">Título (Z-A)</button>
-                                <button class="sort-option" data-sort-by="date-desc">Más reciente</button>
-                                <button class="sort-option" data-sort-by="date-asc">Más antiguo</button>
+                                <button class="sort-option" data-sort-by="default">Orden por defecto</button><button class="sort-option" data-sort-by="alpha-asc">Título (A-Z)</button><button class="sort-option" data-sort-by="alpha-desc">Título (Z-A)</button><button class="sort-option" data-sort-by="date-desc">Más reciente</button><button class="sort-option" data-sort-by="date-asc">Más antiguo</button>
                             </div>
                         </div>
                     </div>
@@ -195,73 +212,87 @@ export function renderPlaylistView(node, name, path, appState, onCompleteCallbac
                 <div id="track-list-header" class="grid grid-cols-[auto_4fr_3fr_auto] gap-4 text-gray-400 border-b border-gray-700 p-2 text-sm uppercase tracking-wider mt-4">
                     <div class="text-center">#</div><div>Título</div><div>Álbum</div><div class="text-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v6h6v-2h-4z"></path></svg></div>
                 </div>
-                <div id="track-list" class="mt-4 space-y-1"></div>
+                <div id="track-list" class="mt-4">${placeholdersHTML}</div>
             </div>
         </main>`;
-    
-    const coverContainer = mainContentContainer.querySelector('#playlist-cover-container');
-    const playlistNameEl = mainContentContainer.querySelector('#playlist-name');
-    const playlistMetadataEl = mainContentContainer.querySelector('#playlist-metadata');
-    const songCount = tracksToRender.length;
-    const totalDuration = tracksToRender.reduce((sum, track) => sum + (track.duration || 0), 0);
-    const coverUrl = songCount > 0 ? tracksToRender[0].cover : 'https://placehold.co/192x192/121212/808080?text=Playlist';
-    
-    coverContainer.innerHTML = `<img src="${coverUrl}" alt="Portada de ${name}">`;
-    playlistNameEl.textContent = name;
-    playlistMetadataEl.textContent = `${songCount} canciones, ${formatTotalDuration(totalDuration)}`;
 
     const trackListEl = document.getElementById('track-list');
-    if (!trackListEl) return;
-    
-    renderCancelled = false;
+    const placeholders = trackListEl.querySelectorAll('.track-item-placeholder');
+    const renderedIndices = new Set(); // Para no renderizar el mismo item dos veces
 
-    // Lógica de renderizado por lotes (batch rendering)
-    const BATCH_SIZE = 50; // Renderiza 50 canciones por frame para fluidez
-    const renderBatch = (index = 0) => {
-        if (index >= tracksToRender.length || renderCancelled) {
-            // Cuando termina el renderizado, se llama al callback si existe.
-            if (onCompleteCallback) onCompleteCallback();
-            
-            // Si la playlist cargada es la que está sonando, resalta la canción activa
-            if (appState.playingContext && appState.playingContext.path && JSON.stringify(appState.playingContext.path) === playlistPath) {
-                const activeTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
-                if(activeTrack) highlightPlayingTrack(activeTrack.id, appState);
+    // --- PASO 2: INICIAR LOS RENDERIZADORES ASÍNCRONOS ---
+
+    // Renderizador 1: Cascada de arriba a abajo
+    let topDownIndex = 0;
+    function renderTopDown() {
+        if (topDownIndex >= tracksToRender.length) return; // Terminado
+
+        // Renderiza unos pocos tracks por frame para mayor fluidez
+        const batchSize = 3;
+        for (let i = 0; i < batchSize && topDownIndex < tracksToRender.length; i++) {
+            if (!renderedIndices.has(topDownIndex)) {
+                const track = tracksToRender[topDownIndex];
+                const placeholder = placeholders[topDownIndex];
+                if (track && placeholder) {
+                    const trackEl = createTrackElement(track, topDownIndex, appState);
+                    placeholder.replaceWith(trackEl);
+                    renderedIndices.add(topDownIndex);
+                }
             }
-            return;
+            topDownIndex++;
         }
+        activeRenderers.push(requestAnimationFrame(renderTopDown));
+    }
 
-        const fragment = document.createDocumentFragment();
-        const end = Math.min(index + BATCH_SIZE, tracksToRender.length);
-
-        for (let i = index; i < end; i++) {
-            const trackElement = createTrackElement(tracksToRender[i], i, appState);
-            fragment.appendChild(trackElement);
-        }
-        trackListEl.appendChild(fragment);
-
-        requestAnimationFrame(() => renderBatch(end));
-    };
-
-    // Si hay un targetTrackId, renderiza un lote inicial y luego el resto.
-    // Esto asegura que el elemento exista antes de intentar hacer scroll.
-    if (targetTrackId) {
-        const targetIndex = tracksToRender.findIndex(t => t.id === targetTrackId);
-        if (targetIndex !== -1) {
-            // Renderiza todo hasta el target de inmediato para asegurar que exista
-            const fragment = document.createDocumentFragment();
-            for (let i = 0; i <= targetIndex; i++) {
-                const trackElement = createTrackElement(tracksToRender[i], i, appState);
-                fragment.appendChild(trackElement);
+    // Renderizador 2: Prioritario, del centro hacia afuera
+    const targetIndex = targetTrackId ? tracksToRender.findIndex(t => t.id === targetTrackId) : -1;
+    let offset = 0;
+    function renderTargetOut() {
+        if (targetIndex === -1) return;
+        
+        let renderedSomething = false;
+        // Renderiza el de arriba (target - offset)
+        const upIndex = targetIndex - offset;
+        if (upIndex >= 0 && !renderedIndices.has(upIndex)) {
+            const track = tracksToRender[upIndex];
+            const placeholder = placeholders[upIndex];
+            if (track && placeholder) {
+                placeholder.replaceWith(createTrackElement(track, upIndex, appState));
+                renderedIndices.add(upIndex);
+                renderedSomething = true;
             }
-            trackListEl.appendChild(fragment);
-
-            // Haz scroll y luego renderiza el resto
-            ensureTrackIsVisible(targetTrackId, appState);
-            renderBatch(targetIndex + 1);
-            return;
+        }
+        
+        // Renderiza el de abajo (target + offset), si no es el mismo
+        if (offset > 0) {
+            const downIndex = targetIndex + offset;
+            if (downIndex < tracksToRender.length && !renderedIndices.has(downIndex)) {
+                const track = tracksToRender[downIndex];
+                const placeholder = placeholders[downIndex];
+                if (track && placeholder) {
+                    placeholder.replaceWith(createTrackElement(track, downIndex, appState));
+                    renderedIndices.add(downIndex);
+                    renderedSomething = true;
+                }
+            }
+        }
+        
+        offset++;
+        if (upIndex >= 0 || (targetIndex + (offset -1)) < tracksToRender.length) {
+            activeRenderers.push(requestAnimationFrame(renderTargetOut));
         }
     }
-    
-    // Si no hay target, simplemente renderiza todo desde el principio.
-    renderBatch(0);
+
+    // Inicia ambos renderizadores
+    activeRenderers.push(requestAnimationFrame(renderTopDown));
+    if (targetIndex !== -1) {
+        ensureTrackIsVisible(targetTrackId, appState);
+        activeRenderers.push(requestAnimationFrame(renderTargetOut));
+    }
+
+    // Resalta la canción activa si la playlist que se muestra es la que está sonando
+    if (appState.playingContext?.path && JSON.stringify(appState.playingContext.path) === playlistPath) {
+        const activeTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
+        if (activeTrack) highlightPlayingTrack(activeTrack.id, appState);
+    }
 }

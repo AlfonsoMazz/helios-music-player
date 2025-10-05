@@ -13,6 +13,9 @@ export const appState = {
     // El estado de la biblioteca de música cargada
     library: {},
     
+    // Un indicador para saber si se está escaneando una nueva biblioteca.
+    isScanning: false,
+
     /**
      * CONTEXTO DE REPRODUCCIÓN: La fuente de verdad sobre lo que está sonando.
      */
@@ -31,7 +34,7 @@ export const appState = {
     
     // Estado del reproductor
     isPlaying: false,
-    currentTime: 0, // <-- Asegúrate de que esta línea esté presente
+    currentTime: 0, 
 
     // Referencias a los controles de los módulos para comunicación entre ellos
     playerControls: null,

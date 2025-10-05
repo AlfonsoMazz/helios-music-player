@@ -28,7 +28,8 @@ export function initMainView(appState) {
 
     const handleSearch = (searchTerm) => {
         if (!appState.viewingContext) return;
-        const trackItems = document.querySelectorAll('#track-list .track-item');
+        
+        const trackItems = mainContentContainer.querySelectorAll('#track-list .track-item');
         trackItems.forEach(item => {
             const title = item.querySelector('.title-text')?.textContent.toLowerCase() || '';
             const artist = item.querySelector('.text-sm.text-gray-400')?.textContent.toLowerCase() || '';
@@ -36,6 +37,9 @@ export function initMainView(appState) {
             const isMatch = title.includes(searchTerm) || artist.includes(searchTerm) || album.includes(searchTerm);
             item.style.display = isMatch ? 'grid' : 'none';
         });
+        
+        const placeholders = mainContentContainer.querySelectorAll('#track-list .track-item-placeholder');
+        placeholders.forEach(p => p.style.display = 'none');
     };
     const debouncedSearch = debounce(handleSearch, 300);
 
@@ -55,7 +59,7 @@ export function initMainView(appState) {
                 }
                 appState.viewingContext = { tracks: [...node._tracks], originalTracks: [...node._tracks], node, name, path };
                 appState.playerControls.playTrack(trackIndexToPlay);
-                renderPlaylistView(node, name, path, appState, null, null);
+                renderPlaylistView(node, name, path, appState, null);
             }
             return;
         }
@@ -69,7 +73,7 @@ export function initMainView(appState) {
                 if (currentlyActive) currentlyActive.classList.remove('sidebar-item-active');
                 const targetSidebarItem = document.querySelector(`.sidebar-item[data-path='${JSON.stringify(path)}']`);
                 if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');
-                renderPlaylistView(node, name, path, appState, null, null);
+                renderPlaylistView(node, name, path, appState, null);
             }
             return;
         }
@@ -99,7 +103,7 @@ export function initMainView(appState) {
             const playlistPath = JSON.stringify(appState.viewingContext.path);
             appState.playlistSortOrders[playlistPath] = sortBy;
             appState.settingsControls.save(appState);
-            renderPlaylistView(appState.viewingContext.node, appState.viewingContext.name, appState.viewingContext.path, appState, null, null);
+            renderPlaylistView(appState.viewingContext.node, appState.viewingContext.name, appState.viewingContext.path, appState, null);
             sortPanel?.classList.add('hidden');
             return;
         }
@@ -111,7 +115,7 @@ export function initMainView(appState) {
             }
         }
         
-        if (sortPanel && !sortPanel.contains(e.target) && !sortBtn) {
+        if (sortPanel && !sortPanel.contains(e.target) && e.target !== sortBtn) {
             sortPanel.classList.add('hidden');
         }
     });
@@ -129,12 +133,10 @@ export function initMainView(appState) {
         if (!appState.playingContext || !appState.playingContext.path) return;
         const currentTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
         if (!currentTrack) return;
-        const trackElement = document.querySelector(`#track-list .track-item[data-track-id="${currentTrack.id}"]`);
-        if (trackElement) {
-            trackElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        ensureTrackIsVisible(currentTrack.id, appState);
     }
 
+    // LÓGICA DE NAVEGACIÓN SIMPLIFICADA
     function navigateToTrack(trackId) {
         if (!appState.playingContext || !appState.playingContext.path) return;
 
@@ -163,25 +165,14 @@ export function initMainView(appState) {
             }
         }
 
-        const viewingPlaylistPath = appState.viewingContext ? JSON.stringify(appState.viewingContext.path) : null;
-
-        // Define la acción de scroll que se ejecutará al finalizar el renderizado.
-        const onRenderComplete = () => {
-            ensureTrackIsVisible(trackId, appState);
-        };
-
-        if (playingPlaylistPath === viewingPlaylistPath) {
-            // Si ya estamos en la playlist correcta, solo hacemos scroll.
-            ensureTrackIsVisible(trackId, appState);
-        } else {
-            // Si no, renderizamos la nueva playlist y le pasamos la acción de scroll como un callback.
-            renderPlaylistView(node, name, path, appState, onRenderComplete, trackId);
-        }
+        // Simplemente llamamos a renderPlaylistView y le pasamos el ID de la canción.
+        // La vista ahora se encarga de toda la lógica de renderizado y scroll.
+        renderPlaylistView(node, name, path, appState, trackId);
     }
 
     return {
         renderHomeView: () => renderHomeView(appState),
-        renderPlaylistView: (node, name, path, onCompleteCallback, targetTrackId = null) => renderPlaylistView(node, name, path, appState, onCompleteCallback, targetTrackId),
+        renderPlaylistView: (node, name, path, targetTrackId = null) => renderPlaylistView(node, name, path, appState, targetTrackId),
         highlightPlayingTrack: (trackId) => highlightPlayingTrack(trackId, appState),
         scrollToActiveTrack,
         navigateToTrack,

@@ -13,7 +13,8 @@ export function loadSettings() {
                 isShuffled: false,
                 playlistSortOrders: {},
                 lastSession: null,
-                expandedFolderPaths: [], // <-- NUEVO: Valor predeterminado
+                expandedFolderPaths: [],
+                sidebarScrollTop: 0, // <-- NUEVO: Valor predeterminado
             };
             return { ...defaults, ...JSON.parse(savedSettings) };
         }
@@ -29,7 +30,8 @@ export function loadSettings() {
         isShuffled: false,
         playlistSortOrders: {},
         lastSession: null,
-        expandedFolderPaths: [], // <-- NUEVO: Valor predeterminado
+        expandedFolderPaths: [],
+        sidebarScrollTop: 0, // <-- NUEVO: Valor predeterminado
     };
 }
 
@@ -46,7 +48,8 @@ export function saveSettings(appState) {
                 trackIndex: appState.playingContext.trackIndex,
                 currentTime: appState.currentTime
             } : null,
-            expandedFolderPaths: appState.expandedFolderPaths, // <-- NUEVO: Guardado de estado
+            expandedFolderPaths: appState.expandedFolderPaths,
+            sidebarScrollTop: appState.sidebarScrollTop, // <-- NUEVO: Guardado de estado
         };
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsToSave));
     } catch (e) {

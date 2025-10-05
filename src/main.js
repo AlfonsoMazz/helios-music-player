@@ -1,6 +1,6 @@
 // src/main.js
 import { initPlayer } from './js/player.js';
-import { initLibrary, loadLibrary } from './js/library.js';
+import { initLibrary, loadLibrary, handleFileSelection } from './js/library.js';
 import { initQueue } from './js/queue.js';
 import { saveSettings } from './js/settings.js';
 import { initSidebar } from './js/sidebar.js';
@@ -32,11 +32,21 @@ function findNodeByPath(path, libraryNode) {
 }
 
 async function initializeApp() {
+    const loader = document.getElementById('app-loader');
+    const appContainer = document.getElementById('app-container');
+
     await Promise.all([
         loadComponent('./components/sidebar.txt', 'sidebar-container'),
         loadComponent('./components/mainView.txt', 'main-content-container'),
         loadComponent('./components/player.txt', 'player-container')
     ]);
+
+    // Ocultamos el loader y mostramos la app principal
+    if (loader) loader.classList.add('hidden');
+    if (appContainer) {
+        appContainer.classList.remove('hidden');
+        appContainer.classList.add('flex');
+    }
     
     const audioPlayer = document.getElementById('audio-player');
     
@@ -54,9 +64,21 @@ async function initializeApp() {
         appState.mainViewControls.highlightPlayingTrack
     );
 
+    const fileInput = document.getElementById('file-input');
+    if (fileInput && appState.sidebarControls.renderOrUpdateNode) {
+        fileInput.addEventListener('change', async (event) => {
+            appState.isScanning = true;
+            appState.sidebarControls.renderSidebar(); // Llama para mostrar el estado de escaneo
+
+            await handleFileSelection(event, appState, appState.sidebarControls.renderOrUpdateNode);
+            
+            appState.isScanning = false;
+            appState.sidebarControls.renderSidebar(); // Llama para quitar el estado de escaneo
+        });
+    }
+
     await loadLibrary(appState);
 
-    // --- LÓGICA DE INICIO Y RESTAURACIÓN DE SESIÓN (REFACTORIZADA) ---
     if (appState.lastSession) {
         const { path, trackIndex, currentTime } = appState.lastSession;
         const node = findNodeByPath(path, appState.library);

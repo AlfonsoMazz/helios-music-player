@@ -17,6 +17,25 @@
         ::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
         .main-view, .sidebar { height: calc(100vh - 90px); }
 
+        /* --- NUEVO: ESTILOS PARA EL LOADER INICIAL --- */
+        #app-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease-out;
+        }
+        #app-loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -332,9 +351,13 @@
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+        .sidebar-item-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
         .track-item-fade-in {
             animation: fadeIn 0.4s ease-out forwards;
         }
@@ -361,13 +384,17 @@
     </style>
 </head>
 <body class="bg-black text-gray-300">
-    <div class="w-full h-screen flex flex-col">
-        <div class="flex flex-1 overflow-hidden">
+    <div id="app-loader">
+        <svg class="w-12 h-12 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path fill="currentColor" d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></path></svg>
+    </div>
+
+    <div id="app-container" class="w-full h-screen flex-col hidden"> <div class="flex flex-1 overflow-hidden">
             <div id="sidebar-container"></div>
             <div id="main-content-container" class="flex-1"></div>
         </div>
         <footer id="player-container"></footer>
     </div>
+
     <div id="context-menu" class="hidden"></div>
     <audio id="audio-player"></audio>
     <script src="main.js" type="module"></script>

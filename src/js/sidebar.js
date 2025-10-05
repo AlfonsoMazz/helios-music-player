@@ -54,6 +54,7 @@ function updateNowPlayingInfo(track) {
 
 // --- Función Principal de Inicialización ---
 export function initSidebar(appState, mainViewControls) {
+    const playlistContainer = document.getElementById('playlist-container');
     const fileInput = document.getElementById('file-input');
     const settingsBtn = document.getElementById('settings-btn');
     const settingsPanel = document.getElementById('settings-panel');
@@ -77,9 +78,13 @@ export function initSidebar(appState, mainViewControls) {
         appState.expandedFolderPaths = expandedFolderPaths;
         appState.settingsControls.save(appState);
     }
-
-    function createSidebarNode(name, node, path) {
+    
+    function createSidebarNode(name, node, path, isAnimated = false) {
         const li = document.createElement('li');
+        if (isAnimated) {
+             li.classList.add('sidebar-item-fade-in');
+        }
+
         const hasSubFolders = Object.keys(node._items).length > 0;
         const hasTracks = node._tracks.length > 0;
         
@@ -96,39 +101,9 @@ export function initSidebar(appState, mainViewControls) {
         li.appendChild(itemDiv);
         
         if (hasSubFolders) {
-            li.dataset.childrenLoaded = 'false';
             const sublist = document.createElement('ul');
             sublist.className = 'pl-5 hidden';
             li.appendChild(sublist);
-
-            const pathString = JSON.stringify(path);
-            const isExpanded = appState.expandedFolderPaths && appState.expandedFolderPaths.includes(pathString);
-
-            if (isExpanded) {
-                sublist.classList.remove('hidden');
-                const arrow = itemDiv.querySelector('.folder-arrow');
-                if (arrow) arrow.classList.add('rotate-90');
-
-                if (li.dataset.childrenLoaded === 'false') {
-                    li.dataset.childrenLoaded = 'true';
-                    const sortedKeys = Object.keys(node._items).sort((a, b) => a.localeCompare(b));
-                    
-                    const batchSize = 50;
-                    let index = 0;
-                    function processBatch() {
-                        const batchEnd = Math.min(index + batchSize, sortedKeys.length);
-                        for (let i = index; i < batchEnd; i++) {
-                            const key = sortedKeys[i];
-                            sublist.appendChild(createSidebarNode(key, node._items[key], [...path, key]));
-                        }
-                        index = batchEnd;
-                        if (index < sortedKeys.length) {
-                            setTimeout(processBatch, 0);
-                        }
-                    }
-                    processBatch();
-                }
-            }
         }
         
         itemDiv.addEventListener('click', (e) => {
@@ -139,38 +114,14 @@ export function initSidebar(appState, mainViewControls) {
                 if (currentlyActive) currentlyActive.classList.remove('sidebar-item-active');
                 itemDiv.classList.add('sidebar-item-active');
 
-                // CORRECCIÓN: Se elimina la lógica que asignaba un targetTrackId.
-                // Un clic aquí siempre debe abrir la playlist desde el principio.
                 if (mainViewControls) {
                     mainViewControls.renderPlaylistView(node, name, path, null, null);
                 }
             }
 
             if (hasSubFolders) {
-                const isLoaded = li.dataset.childrenLoaded === 'true';
                 const sublist = li.querySelector('ul');
                 const arrow = itemDiv.querySelector('.folder-arrow');
-
-                if (!isLoaded) {
-                    li.dataset.childrenLoaded = 'true';
-                    const sortedKeys = Object.keys(node._items).sort((a, b) => a.localeCompare(b));
-                    
-                    const batchSize = 50;
-                    let index = 0;
-                    function processBatch() {
-                        const batchEnd = Math.min(index + batchSize, sortedKeys.length);
-                        for (let i = index; i < batchEnd; i++) {
-                            const key = sortedKeys[i];
-                            sublist.appendChild(createSidebarNode(key, node._items[key], [...path, key]));
-                        }
-                        index = batchEnd;
-                        if (index < sortedKeys.length) {
-                            setTimeout(processBatch, 0);
-                        }
-                    }
-                    processBatch();
-                }
-                
                 sublist.classList.toggle('hidden');
                 arrow.classList.toggle('rotate-90');
                 saveExpandedState();
@@ -180,27 +131,96 @@ export function initSidebar(appState, mainViewControls) {
         return li;
     }
 
-    function renderSidebar() {
-        const playlistContainer = document.getElementById('playlist-container');
+    function renderOrUpdateNode(path, node) {
         if (!playlistContainer) return;
 
+        const name = path[path.length - 1];
+        const parentPath = path.slice(0, -1);
+        
+        let parentUl;
+        if (parentPath.length === 0) {
+            parentUl = playlistContainer.querySelector('ul');
+            if (!parentUl) {
+                parentUl = document.createElement('ul');
+                playlistContainer.appendChild(parentUl);
+            }
+        } else {
+            const parentDiv = playlistContainer.querySelector(`.sidebar-item[data-path='${JSON.stringify(parentPath)}']`);
+            if (parentDiv) {
+                parentUl = parentDiv.nextElementSibling;
+            }
+        }
+        
+        if (parentUl) {
+            const existingItem = parentUl.querySelector(`.sidebar-item[data-path='${JSON.stringify(path)}']`);
+            if (!existingItem) {
+                const newNodeEl = createSidebarNode(name, node, path, true);
+                parentUl.appendChild(newNodeEl);
+            }
+        } else {
+            console.warn("No se pudo encontrar el contenedor padre para:", path);
+        }
+    }
+    
+    function renderSidebar() {
+        if (!playlistContainer) return;
         playlistContainer.innerHTML = '';
-        if (Object.keys(appState.library).length === 0) {
-            playlistContainer.innerHTML = `<p class="text-xs text-gray-500 px-2">Usa "+" para cargar tu música.</p>`;
+
+        // LÓGICA DE FEEDBACK VISUAL
+        if (appState.isScanning) {
+            playlistContainer.innerHTML = `<p class="text-xs text-gray-500 px-2 animate-pulse">Escaneando y guardando biblioteca...</p>`;
             return;
         }
-        const rootUl = document.createElement('ul');
-        const sortedKeys = Object.keys(appState.library).sort((a, b) => a.localeCompare(b));
-        for (const key of sortedKeys) {
-            rootUl.appendChild(createSidebarNode(key, appState.library[key], [key]));
+
+        if (Object.keys(appState.library).length > 0) {
+            const rootUl = document.createElement('ul');
+            
+            function buildCachedTree(node, currentPath, parentUl) {
+                const sortedKeys = Object.keys(node._items).sort((a, b) => a.localeCompare(b));
+                for (const key of sortedKeys) {
+                    const childNode = node._items[key];
+                    const newPath = [...currentPath, key];
+                    const li = createSidebarNode(key, childNode, newPath, false);
+                    parentUl.appendChild(li);
+
+                    if (Object.keys(childNode._items).length > 0) {
+                        const sublist = li.querySelector('ul');
+                        const pathString = JSON.stringify(newPath);
+                        const isExpanded = appState.expandedFolderPaths && appState.expandedFolderPaths.includes(pathString);
+                        
+                        if (isExpanded) {
+                            sublist.classList.remove('hidden');
+                            const arrow = li.querySelector('.folder-arrow');
+                            if (arrow) arrow.classList.add('rotate-90');
+                            buildCachedTree(childNode, newPath, sublist);
+                        }
+                    }
+                }
+            }
+
+            buildCachedTree({ _items: appState.library }, [], rootUl);
+            playlistContainer.appendChild(rootUl);
+            
+            if (appState.sidebarScrollTop) {
+                playlistContainer.scrollTop = appState.sidebarScrollTop;
+            }
+
+        } else {
+            playlistContainer.innerHTML = `<p class="text-xs text-gray-500 px-2">Usa "+" para cargar tu música.</p>`;
         }
-        playlistContainer.appendChild(rootUl);
     }
 
     // --- Event Listeners ---
     if(addLibraryBtn) addLibraryBtn.addEventListener('click', () => fileInput.click());
     if(settingsBtn) settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsPanel.classList.toggle('hidden'); });
     if (selectFolderBtn) selectFolderBtn.addEventListener('click', () => fileInput.click());
+    
+    if (playlistContainer) {
+        playlistContainer.addEventListener('scroll', () => {
+            appState.sidebarScrollTop = playlistContainer.scrollTop;
+            appState.settingsControls.save(appState);
+        }, { passive: true }); // Usamos passive para mejor rendimiento de scroll
+    }
     
     if (homeBtn && mainViewControls) {
         homeBtn.addEventListener('click', () => {
@@ -237,6 +257,7 @@ export function initSidebar(appState, mainViewControls) {
 
     return {
         renderSidebar,
-        updateNowPlayingInfo
+        updateNowPlayingInfo,
+        renderOrUpdateNode 
     };
 }
