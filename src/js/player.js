@@ -451,11 +451,12 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     repeatBtn.addEventListener('click', cycleRepeatState);
     volumeBtn.addEventListener('click', toggleMute);
     
+    // ... dentro de initPlayer en player.js
     if (miniPlayerBtn) {
         miniPlayerBtn.addEventListener('click', () => {
-            // CAMBIO: Ahora envía un mensaje a Electron en lugar de mostrar un div
+            // CAMBIO FINAL: Usamos la función específica 'toggleMiniPlayer'.
             if (window.electronAPI) {
-                window.electronAPI.sendMessage('toggle-miniplayer');
+                window.electronAPI.toggleMiniPlayer();
             }
         });
     }

@@ -7,6 +7,58 @@ import { initSidebar } from './js/sidebar.js';
 import { initMainView } from './js/mainView.js';
 import { appState } from './js/state.js';
 
+// --- FUNCIÓN AUXILIAR MEJORADA ---
+function getCoverAsBase64(coverUrl) {
+    return new Promise(async (resolve, reject) => {
+        if (!coverUrl || !coverUrl.startsWith('blob:')) {
+            resolve(coverUrl);
+            return;
+        }
+        try {
+            const response = await fetch(coverUrl);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                resolve(reader.result);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error('Error al convertir la carátula a Base64:', error);
+            reject(error);
+        }
+    });
+}
+
+// --- NUEVA FUNCIÓN PARA ENVIAR ESTADO ---
+// Centralizamos la lógica de envío para no repetirla.
+async function sendStateToMiniPlayer() {
+    if (window.electronAPI && appState.playingContext?.path) {
+        const currentTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
+        if (!currentTrack) return;
+
+        const coverBase64 = await getCoverAsBase64(currentTrack.cover);
+
+        const simplifiedState = {
+            track: {
+                title: currentTrack.title,
+                artist: currentTrack.artist,
+                cover: coverBase64,
+                duration: currentTrack.duration
+            },
+            isPlaying: appState.isPlaying,
+            currentTime: appState.currentTime,
+            volume: appState.volume,
+            isMuted: appState.isMuted,
+            isShuffled: appState.isShuffled,
+            repeatState: appState.repeatState
+        };
+        
+        window.electronAPI.syncState(simplifiedState);
+    }
+}
+
+
 async function loadComponent(componentUrl, elementId) {
     try {
         const response = await fetch(componentUrl);
@@ -40,11 +92,10 @@ async function initializeApp() {
         loadComponent('./components/mainView.txt', 'main-content-container'),
         loadComponent('./components/player.txt', 'player-container'),
     ]);
-
-    // Limpiamos el contenedor del miniplayer en la app principal
-    const miniPlayerContainer = document.getElementById('mini-player-container');
-    if (miniPlayerContainer) miniPlayerContainer.innerHTML = '';
-
+    
+    // El miniplayer.txt ya no se carga aquí
+    // const miniPlayerContainer = document.getElementById('mini-player-container');
+    // if (miniPlayerContainer) miniPlayerContainer.innerHTML = '';
 
     if (loader) loader.classList.add('hidden');
     if (appContainer) {
@@ -73,9 +124,7 @@ async function initializeApp() {
         fileInput.addEventListener('change', async (event) => {
             appState.isScanning = true;
             appState.sidebarControls.renderSidebar();
-
             await handleFileSelection(event, appState, appState.sidebarControls.renderOrUpdateNode);
-            
             appState.isScanning = false;
             appState.sidebarControls.renderSidebar();
         });
@@ -124,7 +173,6 @@ async function initializeApp() {
             
             setTimeout(() => {
                 appState.mainViewControls.renderPlaylistView(node, playlistName, path, trackToRestore.id);
-
                 const targetSidebarItem = document.querySelector(`.sidebar-item[data-path='${JSON.stringify(path)}']`);
                 if (targetSidebarItem) targetSidebarItem.classList.add('sidebar-item-active');
             }, 0);
@@ -139,43 +187,25 @@ async function initializeApp() {
 
     console.log('¡Aplicación principal inicializada!');
 
-    // --- SINCRONIZACIÓN HACIA EL MINI PLAYER ---
-    setInterval(() => {
-        if (window.electronAPI && appState.playingContext?.path) {
-            const currentTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
-            if (!currentTrack) return;
+    // --- SINCRONIZACIÓN HACIA EL MINI PLAYER (PERIÓDICA) ---
+    setInterval(sendStateToMiniPlayer, 500);
 
-            const simplifiedState = {
-                track: {
-                    title: currentTrack.title,
-                    artist: currentTrack.artist,
-                    cover: currentTrack.cover,
-                    duration: currentTrack.duration
-                },
-                isPlaying: appState.isPlaying,
-                currentTime: appState.currentTime,
-                volume: appState.volume,
-                isMuted: appState.isMuted,
-                isShuffled: appState.isShuffled,
-                repeatState: appState.repeatState
-            };
-            
-            window.electronAPI.sendMessage('sync-state-to-main', simplifiedState);
-        }
-    }, 250);
-
-    // --- ESCUCHA ACCIONES DESDE EL MINI PLAYER ---
+    // --- ESCUCHA DE ACCIONES Y SINCRONIZACIÓN FORZADA ---
     if (window.electronAPI) {
-        window.electronAPI.on('execute-control-action', (action) => {
+        // Escucha acciones de control desde el mini-player
+        window.electronAPI.onExecuteAction((action) => {
             if (!appState.playerControls) return;
 
             if (typeof action === 'string' && appState.playerControls[action]) {
                 appState.playerControls[action]();
             } 
-            else if (typeof action === 'object' && appState.playerControls[action.type]) {
+            else if (typeof action === 'object' && action.type && appState.playerControls[action.type]) {
                 appState.playerControls[action.type](action.value);
             }
         });
+
+        // [NUEVO] Escucha la orden para forzar el envío del estado actual
+        window.electronAPI.onForceStateSync(sendStateToMiniPlayer);
     }
 }
 

@@ -1,8 +1,8 @@
 // src/js/views/miniPlayer.js
 
 // --- Declaraciones de variables del DOM ---
-let miniPlayerContainer, dragHandle, closeBtn, bgCover, mainCoverArt, titleEl, artistEl, playPauseBtn, playIcon, pauseIcon, prevBtn, nextBtn, shuffleBtn, repeatBtn, volumeBtn, volumeBar, progressBarContainer, progressBarFg, mpCurrentTime, mpTotalTime;
-let dragHandleBar, closeBtnBar, playPauseBtnBar, playIconBar, pauseIconBar, prevBtnBar, nextBtnBar, shuffleBtnBar, repeatBtnBar, volumeBtnBar, coverBar, titleBar, artistBar, progressBarContainerBar, progressBarFgBar;
+let miniPlayerContainer, mpMainContainer, closeBtn, bgCover, mainCoverArt, titleEl, artistEl, playPauseBtn, playIcon, pauseIcon, prevBtn, nextBtn, shuffleBtn, repeatBtn, volumeBtn, volumeBar, progressBarContainer, progressBarFg, mpCurrentTime, mpTotalTime;
+let closeBtnBar, playPauseBtnBar, playIconBar, pauseIconBar, prevBtnBar, nextBtnBar, shuffleBtnBar, repeatBtnBar, volumeBtnBar, coverBar, titleBar, artistBar, progressBarContainerBar, progressBarFgBar;
 let globalVolumePopup, globalVolumeBar;
 let volumePopupTimeout;
 let animationFrameId = null;
@@ -13,33 +13,61 @@ const repeatIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 
 const volumeIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path fill="currentColor" d="M64 96v64a8 8 0 0 1-8 8h-8a8 8 0 0 1-8-8V96a8 8 0 0 1 8-8h8a8 8 0 0 1 8 8Zm32-72h-8a8 8 0 0 0-8 8v192a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V32a8 8 0 0 0-8-8Zm40 32h-8a8 8 0 0 0-8 8v128a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V64a8 8 0 0 0-8-8Zm40 32h-8a8 8 0 0 0-8 8v64a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V96a8 8 0 0 0-8-8Zm40-16h-8a8 8 0 0 0-8 8v96a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V80a8 8 0 0 0-8-8Z"/></svg>`;
 const muteIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path fill="currentColor" d="M60 96v64a12 12 0 0 1-24 0V96a12 12 0 0 1 24 0m-3.12-64.07a12 12 0 1 0-17.76 16.14L76 88.64V224a12 12 0 0 0 24 0V115l16 17.6V192a12 12 0 0 0 24 0v-33l59.12 65a12 12 0 0 0 17.76-16.14ZM128 80.54a12 12 0 0 0 12-12V64a12 12 0 0 0-24 0v4.54a12 12 0 0 0 12 12m40 44a12 12 0 0 0 12-12V96a12 12 0 0 0-24 0v16.54a12 12 0 0 0 12 12M208 68a12 12 0 0 0-12 12v76.54a12 12 0 0 0 24 0V80a12 12 0 0 0-12-12"/></svg>`;
 
-// --- Lógica de Arrastre (sin cambios) ---
-let isDragging = false;
-let initialTx, initialTy, mousePressX, mousePressY;
-function onDragStart(e) { /* ... */ }
-function onDragMove(e) { /* ... */ }
-function onDragEnd(e) { /* ... */ }
-onDragStart = function(e) { if (e.target.closest('button') || e.target.closest('input[type="range"]')) return; isDragging = true; mousePressX = e.clientX; mousePressY = e.clientY; const t = new DOMMatrix(window.getComputedStyle(miniPlayerContainer).transform); initialTx = t.m41; initialTy = t.m42; miniPlayerContainer.style.transition = 'none'; window.addEventListener('mousemove', onDragMove, { passive: false }); window.addEventListener('mouseup', onDragEnd, { once: true }); };
-onDragMove = function(e) { if (!isDragging) return; e.preventDefault(); const t = e.clientX - mousePressX, n = e.clientY - mousePressY; miniPlayerContainer.style.transform = `translate(${initialTx+t}px, ${initialTy+n}px)`; };
-onDragEnd = function(e) { if (!isDragging) return; isDragging = false; const t = miniPlayerContainer.getBoundingClientRect(); miniPlayerContainer.style.left = `${t.left}px`; miniPlayerContainer.style.top = `${t.top}px`; miniPlayerContainer.style.transform = 'none'; miniPlayerContainer.style.transition = 'opacity 0.3s ease-out'; window.removeEventListener('mousemove', onDragMove); };
-
-
 // --- Lógica de Utilidad ---
 function formatTime(seconds) { if (isNaN(seconds)) return '0:00'; const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${minutes}:${secs < 10 ? '0' : ''}${secs}`; }
+
 const resizeObserver = new ResizeObserver(entries => {
     for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        miniPlayerContainer.classList.toggle('is-bar-mode', width / height > 1.8);
+        const mainContainer = document.getElementById('mp-main-container'); 
+        if (mainContainer) {
+            const { width, height } = entry.contentRect;
+
+            // [CAMBIO CLAVE] El modo barra se activa solo si la altura es menor a 150px.
+            const isBarMode = height < 150;
+            mainContainer.classList.toggle('is-bar-mode', isBarMode);
+
+            if (isBarMode) {
+                window.electronAPI.setMinimumSize({ width: 500, height: 64 });
+            } else {
+                // [CAMBIO CLAVE] Se permite que el modo cuadrado se encoja verticalmente.
+                window.electronAPI.setMinimumSize({ width: 280, height: 64 });
+            }
+        }
     }
 });
 function updateRangeFill(input) { if (!input) return; const value = (input.value - input.min) / (input.max - input.min) * 100; input.style.background = `linear-gradient(to right, #ffffff ${value}%, #535353 ${value}%)`; }
 
+async function extractDominantColor(imgSrc) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const colorMap = {};
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const key = `${r}-${g}-${b}`;
+                colorMap[key] = (colorMap[key] || 0) + 1;
+            }
+            const dominant = Object.keys(colorMap).reduce((a, b) => colorMap[a] > colorMap[b] ? a : b);
+            const [r, g, b] = dominant.split('-').map(Number);
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            resolve(hex);
+        };
+        img.src = imgSrc;
+    });
+}
 
 export function initMiniPlayer(localState) {
     
-    // --- Lógica de UI interna ---
     function updateMiniPlayerProgress() {
-        if (!localState || !localState.isPlaying || !miniPlayerContainer.classList.contains('visible')) {
+        if (!localState || !localState.isPlaying ) {
             animationFrameId = null;
             return;
         }
@@ -58,12 +86,24 @@ export function initMiniPlayer(localState) {
     function syncButtonsUI() {
         if (!localState) return;
         [shuffleBtn, shuffleBtnBar].forEach(btn => btn?.classList.toggle('active-icon', localState.isShuffled));
+        
         [repeatBtn, repeatBtnBar].forEach(btn => {
             if (!btn) return;
+
+            const iconSvg = btn.querySelector('svg');
             btn.classList.remove('active-icon', 'amber-icon');
-            if (localState.repeatState === 1) btn.classList.add('active-icon');
-            else if (localState.repeatState === 2) btn.classList.add('amber-icon');
+            if(iconSvg) iconSvg.classList.remove('is-rotating');
+
+            if (localState.repeatState > 0) {
+                if(iconSvg) iconSvg.classList.add('is-rotating');
+            }
+            if (localState.repeatState === 1) {
+                btn.classList.add('active-icon');
+            } else if (localState.repeatState === 2) {
+                btn.classList.add('amber-icon');
+            }
         });
+
         const isMuted = localState.volume === 0 || localState.isMuted;
         [volumeBtn, volumeBtnBar].forEach(btn => {
             if (btn) btn.innerHTML = isMuted ? muteIconSVG : volumeIconSVG;
@@ -71,46 +111,56 @@ export function initMiniPlayer(localState) {
     }
 
     function update() {
-        if (!miniPlayerContainer || !localState) return;
+        if (!localState) return;
         const currentTrack = localState.track;
         if (currentTrack) {
             mainCoverArt.src = currentTrack.cover;
             bgCover.style.backgroundImage = `url('${currentTrack.cover}')`;
-            mpTotalTime.textContent = formatTime(currentTrack.duration);
-            titleEl.textContent = currentTrack.title;
-            artistEl.textContent = currentTrack.artist;
-            coverBar.src = currentTrack.cover;
-            titleBar.textContent = currentTrack.title;
-            artistBar.textContent = currentTrack.artist;
+            if(mpTotalTime) mpTotalTime.textContent = formatTime(currentTrack.duration);
+            if(titleEl) titleEl.textContent = currentTrack.title;
+            if(artistEl) artistEl.textContent = currentTrack.artist;
+            if(coverBar) coverBar.src = currentTrack.cover;
+            if(titleBar) titleBar.textContent = currentTrack.title;
+            if(artistBar) artistBar.textContent = currentTrack.artist;
             if (currentTrack.duration > 0) {
                 const progressPercent = (localState.currentTime / currentTrack.duration) * 100;
-                progressBarFg.style.width = `${progressPercent}%`;
-                progressBarFgBar.style.width = `${progressPercent}%`;
-                mpCurrentTime.textContent = formatTime(localState.currentTime);
+                if(progressBarFg) progressBarFg.style.width = `${progressPercent}%`;
+                if(progressBarFgBar) progressBarFgBar.style.width = `${progressPercent}%`;
+                if(mpCurrentTime) mpCurrentTime.textContent = formatTime(localState.currentTime);
             } else {
-                progressBarFg.style.width = '0%';
-                progressBarFgBar.style.width = '0%';
-                mpCurrentTime.textContent = formatTime(0);
+                if(progressBarFg) progressBarFg.style.width = '0%';
+                if(progressBarFgBar) progressBarFgBar.style.width = '0%';
+                if(mpCurrentTime) mpCurrentTime.textContent = formatTime(0);
+            }
+            // Extraer color dominante de la portada
+            if (currentTrack.cover) {
+                extractDominantColor(currentTrack.cover).then(color => {
+                    document.documentElement.style.setProperty('--progress-color', color);
+                    document.documentElement.style.setProperty('--thumb-color', color);
+                });
             }
         } else {
             mainCoverArt.src = 'https://placehold.co/320x320/121212/808080?text=...';
             bgCover.style.backgroundImage = 'none';
-            mpTotalTime.textContent = '0:00';
-            titleEl.textContent = 'Título no disponible';
-            artistEl.textContent = '...';
-            coverBar.src = 'https://placehold.co/80x80/121212/808080?text=...';
-            titleBar.textContent = 'No hay nada en reproducción';
-            artistBar.textContent = '...';
-            progressBarFg.style.width = '0%';
-            progressBarFgBar.style.width = '0%';
-            mpCurrentTime.textContent = formatTime(0);
+            if(mpTotalTime) mpTotalTime.textContent = '0:00';
+            if(titleEl) titleEl.textContent = 'Título no disponible';
+            if(artistEl) artistEl.textContent = '...';
+            if(coverBar) coverBar.src = 'https://placehold.co/80x80/121212/808080?text=...';
+            if(titleBar) titleBar.textContent = 'No hay nada en reproducción';
+            if(artistBar) artistBar.textContent = '...';
+            if(progressBarFg) progressBarFg.style.width = '0%';
+            if(progressBarFgBar) progressBarFgBar.style.width = '0%';
+            if(mpCurrentTime) mpCurrentTime.textContent = formatTime(0);
+            // Resetear colores a default
+            document.documentElement.style.setProperty('--progress-color', '#1DB954');
+            document.documentElement.style.setProperty('--thumb-color', '#1DB954');
         }
-        playIcon.classList.toggle('hidden', localState.isPlaying);
-        pauseIcon.classList.toggle('hidden', !localState.isPlaying);
-        playIconBar.classList.toggle('hidden', localState.isPlaying);
-        pauseIconBar.classList.toggle('hidden', !localState.isPlaying);
-        volumeBar.value = localState.volume * 100;
-        globalVolumeBar.value = localState.volume * 100;
+        if(playIcon) playIcon.classList.toggle('hidden', localState.isPlaying);
+        if(pauseIcon) pauseIcon.classList.toggle('hidden', !localState.isPlaying);
+        if(playIconBar) playIconBar.classList.toggle('hidden', localState.isPlaying);
+        if(pauseIconBar) pauseIconBar.classList.toggle('hidden', !localState.isPlaying);
+        if(volumeBar) volumeBar.value = localState.volume * 100;
+        if(globalVolumeBar) globalVolumeBar.value = localState.volume * 100;
         updateRangeFill(volumeBar);
         updateRangeFill(globalVolumeBar);
         syncButtonsUI();
@@ -121,7 +171,7 @@ export function initMiniPlayer(localState) {
 
     // --- Cache de elementos del DOM ---
     miniPlayerContainer = document.getElementById('mini-player-container');
-    dragHandle = document.getElementById('mp-drag-handle');
+    mpMainContainer = document.getElementById('mp-main-container');
     closeBtn = document.getElementById('mp-close-btn');
     mainCoverArt = document.getElementById('mp-cover-art-main');
     bgCover = document.getElementById('mp-bg-cover');
@@ -140,7 +190,6 @@ export function initMiniPlayer(localState) {
     progressBarFg = document.getElementById('mp-progress-bar-fg');
     mpCurrentTime = document.getElementById('mp-current-time');
     mpTotalTime = document.getElementById('mp-total-time');
-    dragHandleBar = document.getElementById('mp-drag-handle-bar');
     closeBtnBar = document.getElementById('mp-close-btn-bar');
     playPauseBtnBar = document.getElementById('mp-play-pause-btn-bar');
     playIconBar = document.getElementById('mp-play-icon-bar');
@@ -159,57 +208,66 @@ export function initMiniPlayer(localState) {
     globalVolumeBar = document.getElementById('global-volume-bar');
 
     // --- Inyectar SVGs en botones ---
-    [shuffleBtn, shuffleBtnBar].forEach(btn => btn.innerHTML = shuffleIconSVG);
-    [repeatBtn, repeatBtnBar].forEach(btn => btn.innerHTML = repeatIconSVG);
-    [volumeBtn, volumeBtnBar].forEach(btn => btn.innerHTML = volumeIconSVG);
+    [shuffleBtn, shuffleBtnBar].forEach(btn => { if(btn) btn.innerHTML = shuffleIconSVG });
+    [repeatBtn, repeatBtnBar].forEach(btn => { if(btn) btn.innerHTML = repeatIconSVG });
+    [volumeBtn, volumeBtnBar].forEach(btn => { if(btn) btn.innerHTML = volumeIconSVG });
     
     // --- Asignar Event Listeners ---
-    const returnToMain = () => window.electronAPI?.sendMessage('toggle-miniplayer');
+    const returnToMain = () => window.electronAPI?.toggleMiniPlayer();
     [closeBtn, closeBtnBar].forEach(btn => btn?.addEventListener('click', returnToMain));
-    [dragHandle, dragHandleBar].forEach(btn => btn?.addEventListener('mousedown', onDragStart));
     
-    [playPauseBtn, playPauseBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'togglePlayPause')));
-    [nextBtn, nextBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'playNext')));
-    [prevBtn, prevBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'playPrev')));
-    [shuffleBtn, shuffleBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'toggleShuffle')));
-    [repeatBtn, repeatBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'cycleRepeatState')));
-    [volumeBtn, volumeBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'toggleMute')));
+    if (mpMainContainer) {
+        mpMainContainer.addEventListener('mouseenter', () => {
+            mpMainContainer.classList.add('is-hovered');
+        });
+        mpMainContainer.addEventListener('mouseleave', () => {
+            mpMainContainer.classList.remove('is-hovered');
+        });
+    }
+
+    [playPauseBtn, playPauseBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendControlAction('togglePlayPause')));
+    [nextBtn, nextBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendControlAction('playNext')));
+    [prevBtn, prevBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendControlAction('playPrev')));
+    [shuffleBtn, shuffleBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendControlAction('toggleShuffle')));
+    [repeatBtn, repeatBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendControlAction('cycleRepeatState')));
+    [volumeBtn, volumeBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendControlAction('toggleMute')));
     
     [volumeBar, globalVolumeBar].forEach(bar => {
         bar?.addEventListener('input', (e) => {
             const newVolume = e.target.value / 100;
-            window.electronAPI?.sendMessage('miniplayer-control-action', { type: 'setVolume', value: newVolume });
+            window.electronAPI?.sendControlAction({ type: 'setVolume', value: newVolume });
             updateRangeFill(e.target);
         });
     });
 
     [progressBarContainer, progressBarContainerBar].forEach(container => {
         container?.addEventListener('click', (e) => {
+            if(!container) return;
             const rect = container.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const width = rect.width;
             if (width > 0) {
                 const percentage = (clickX / width) * 100;
-                window.electronAPI?.sendMessage('miniplayer-control-action', { type: 'seekTo', value: percentage });
+                window.electronAPI?.sendControlAction({ type: 'seekTo', value: percentage });
             }
         });
     });
 
     // --- Lógica para el pop-up de volumen global ---
-    const showVolumePopup = () => { /* ... sin cambios ... */ };
-    const hideVolumePopup = () => { /* ... sin cambios ... */ };
-    showVolumePopup = () => { clearTimeout(volumePopupTimeout); const rect = volumeBtnBar.getBoundingClientRect(); globalVolumePopup.style.left = `${rect.left+rect.width/2}px`; globalVolumePopup.style.top = `${rect.top}px`; globalVolumePopup.style.transform = `translate(-50%, -100%) translateY(-12px)`; globalVolumePopup.classList.remove('hidden'); };
-    hideVolumePopup = () => { volumePopupTimeout = setTimeout(() => { globalVolumePopup.classList.add('hidden'); }, 250); };
-    volumeBtnBar.addEventListener('mouseenter', showVolumePopup);
-    volumeBtnBar.addEventListener('mouseleave', hideVolumePopup);
-    globalVolumePopup.addEventListener('mouseenter', () => clearTimeout(volumePopupTimeout));
-    globalVolumePopup.addEventListener('mouseleave', hideVolumePopup);
+    const showVolumePopup = () => { clearTimeout(volumePopupTimeout); if(!volumeBtnBar || !globalVolumePopup) return; const rect = volumeBtnBar.getBoundingClientRect(); globalVolumePopup.style.left = `${rect.left+rect.width/2}px`; globalVolumePopup.style.top = `${rect.top}px`; globalVolumePopup.style.transform = `translate(-50%, -100%) translateY(-12px)`; globalVolumePopup.classList.remove('hidden'); };
+    const hideVolumePopup = () => { volumePopupTimeout = setTimeout(() => { if(globalVolumePopup) globalVolumePopup.classList.add('hidden'); }, 250); };
+    if(volumeBtnBar) volumeBtnBar.addEventListener('mouseenter', showVolumePopup);
+    if(volumeBtnBar) volumeBtnBar.addEventListener('mouseleave', hideVolumePopup);
+    if(globalVolumePopup) globalVolumePopup.addEventListener('mouseenter', () => clearTimeout(volumePopupTimeout));
+    if(globalVolumePopup) globalVolumePopup.addEventListener('mouseleave', hideVolumePopup);
 
-    resizeObserver.observe(miniPlayerContainer);
+    if (miniPlayerContainer) {
+        resizeObserver.observe(miniPlayerContainer);
+    }
     updateRangeFill(volumeBar);
     updateRangeFill(globalVolumeBar);
     
-    console.log('Módulo del Mini-Reproductor inicializado y escuchando.');
+    console.log('Módulo del Mini-Reproductor inicializado y enviando comandos.');
     
     return { update };
 }

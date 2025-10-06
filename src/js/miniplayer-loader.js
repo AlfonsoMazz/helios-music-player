@@ -15,15 +15,18 @@ const miniPlayerState = {
 };
 
 // Inicializamos la interfaz del MiniPlayer, pasándole nuestro estado local.
+// Esto nos devuelve un objeto con métodos para controlar la UI, como 'update'.
 const miniPlayerControls = initMiniPlayer(miniPlayerState);
 
-// Ahora, nos ponemos a escuchar los mensajes del canal 'state-updated'
+// Nos ponemos a escuchar los mensajes del proceso principal.
 if (window.electronAPI) {
-    window.electronAPI.on('state-updated', (newState) => {
-        // Cuando llega un nuevo estado, actualizamos nuestro estado local
+    // CAMBIO: Usamos la función específica 'onStateUpdate' en lugar de la genérica 'on'.
+    // Esto hace que el código sea más seguro y claro.
+    window.electronAPI.onStateUpdate((newState) => {
+        // Cuando llega un nuevo estado, actualizamos nuestro estado local.
         Object.assign(miniPlayerState, newState);
         
-        // Y le decimos al MiniPlayer que se redibuje con la nueva información
+        // Y le decimos al MiniPlayer que se redibuje con la nueva información.
         if (miniPlayerControls && miniPlayerControls.update) {
             miniPlayerControls.update();
         }
