@@ -184,7 +184,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         appState.isPlaying = true;
         updatePlayPauseIcon();
         updateNextInQueueCard();
-        appState.miniPlayerControls?.update();
     }
 
     function getNextTrack(direction = 1) {
@@ -314,7 +313,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
             if (appState.queueControls) {
                 appState.queueControls.renderQueue(appState);
             }
-            appState.miniPlayerControls?.update();
         }
     }
 
@@ -347,7 +345,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         }
         appState.isPlaying = !appState.isPlaying;
         updatePlayPauseIcon();
-        appState.miniPlayerControls?.update();
     }
     function toggleShuffle() {
        appState.isShuffled = !appState.isShuffled;
@@ -359,7 +356,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
        triggerSVGAnimation(shuffleBtn);
        updateNextInQueueCard();
        if (appState.queueControls) appState.queueControls.renderQueue(appState);
-       appState.miniPlayerControls?.update();
     }
     function cycleRepeatState() {
         appState.repeatState = (appState.repeatState + 1) % 3;
@@ -367,7 +363,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         updateRepeatUI();
         updateNextInQueueCard();
         if (appState.queueControls) appState.queueControls.renderQueue(appState);
-        appState.miniPlayerControls?.update();
     }
     
     function updateRepeatUI() {
@@ -422,7 +417,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         volumeBar.value = appState.volume * 100;
         updateRangeFill(volumeBar);
         updateVolumeIcon();
-        appState.miniPlayerControls?.update();
     }
 
     function setVolume(newVolume) {
@@ -439,7 +433,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         appState.settingsControls.save(appState);
     }
 
-    /** --- NUEVO: Función para buscar en la canción --- */
     function seekTo(percentage) {
         if (isNaN(audioPlayer.duration)) return;
         audioPlayer.currentTime = (percentage / 100) * audioPlayer.duration;
@@ -460,7 +453,10 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     
     if (miniPlayerBtn) {
         miniPlayerBtn.addEventListener('click', () => {
-            appState.miniPlayerControls?.open();
+            // CAMBIO: Ahora envía un mensaje a Electron en lugar de mostrar un div
+            if (window.electronAPI) {
+                window.electronAPI.sendMessage('toggle-miniplayer');
+            }
         });
     }
     
@@ -492,7 +488,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         currentTimeEl.textContent = formatTime(currentTime);
         updateRangeFill(progressBar);
         
-        appState.currentTime = currentTime; // <-- Esta línea es crucial para el mini-reproductor
+        appState.currentTime = currentTime;
         const now = Date.now();
         if (now - lastSaveTime > 2000) {
             lastSaveTime = now;
@@ -502,7 +498,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
 
     audioPlayer.addEventListener('loadedmetadata', () => {
         totalTimeEl.textContent = formatTime(audioPlayer.duration);
-        appState.miniPlayerControls?.update(); // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
     });
     
     audioPlayer.addEventListener('error', (e) => {
@@ -552,7 +547,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
     updateVolumeIcon();
     updatePlayPauseIcon();
     updateNextInQueueCard();
-    appState.miniPlayerControls?.update();
 
     return { 
         playTrack: (index) => {
@@ -579,6 +573,6 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
         cycleRepeatState,
         setVolume,
         toggleMute,
-        seekTo // <-- NUEVO: Exponer la función
+        seekTo
     };
 }

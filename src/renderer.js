@@ -1,11 +1,10 @@
-// src/main.js
+// src/renderer.js
 import { initPlayer } from './js/player.js';
 import { initLibrary, loadLibrary, handleFileSelection } from './js/library.js';
 import { initQueue } from './js/queue.js';
 import { saveSettings } from './js/settings.js';
 import { initSidebar } from './js/sidebar.js';
 import { initMainView } from './js/mainView.js';
-import { initMiniPlayer } from './js/views/miniPlayer.js'; 
 import { appState } from './js/state.js';
 
 async function loadComponent(componentUrl, elementId) {
@@ -40,8 +39,12 @@ async function initializeApp() {
         loadComponent('./components/sidebar.txt', 'sidebar-container'),
         loadComponent('./components/mainView.txt', 'main-content-container'),
         loadComponent('./components/player.txt', 'player-container'),
-        loadComponent('./components/miniPlayer.txt', 'mini-player-container') 
     ]);
+
+    // Limpiamos el contenedor del miniplayer en la app principal
+    const miniPlayerContainer = document.getElementById('mini-player-container');
+    if (miniPlayerContainer) miniPlayerContainer.innerHTML = '';
+
 
     if (loader) loader.classList.add('hidden');
     if (appContainer) {
@@ -56,7 +59,6 @@ async function initializeApp() {
     initLibrary(appState);
     appState.mainViewControls = initMainView(appState); 
     appState.sidebarControls = initSidebar(appState, appState.mainViewControls);
-    appState.miniPlayerControls = initMiniPlayer(appState);
 
     appState.playerControls = initPlayer(
         audioPlayer, 
@@ -65,7 +67,6 @@ async function initializeApp() {
         appState.mainViewControls.highlightPlayingTrack
     );
     appState.queueControls = initQueue(appState);
-
 
     const fileInput = document.getElementById('file-input');
     if (fileInput && appState.sidebarControls.renderOrUpdateNode) {
@@ -131,16 +132,51 @@ async function initializeApp() {
             if (appState.playerControls) {
                 appState.playerControls.updateNextInQueueCard();
             }
-
-            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
-            // Le decimos al mini-reproductor que se actualice con el estado restaurado.
-            appState.miniPlayerControls?.update();
         }
     } else if (appState.library && Object.keys(appState.library).length > 0) {
         appState.mainViewControls.renderHomeView();
     }
 
-    console.log('¡Aplicación completamente inicializada y refactorizada!');
+    console.log('¡Aplicación principal inicializada!');
+
+    // --- SINCRONIZACIÓN HACIA EL MINI PLAYER ---
+    setInterval(() => {
+        if (window.electronAPI && appState.playingContext?.path) {
+            const currentTrack = appState.playingContext.originalTracks[appState.playingContext.trackIndex];
+            if (!currentTrack) return;
+
+            const simplifiedState = {
+                track: {
+                    title: currentTrack.title,
+                    artist: currentTrack.artist,
+                    cover: currentTrack.cover,
+                    duration: currentTrack.duration
+                },
+                isPlaying: appState.isPlaying,
+                currentTime: appState.currentTime,
+                volume: appState.volume,
+                isMuted: appState.isMuted,
+                isShuffled: appState.isShuffled,
+                repeatState: appState.repeatState
+            };
+            
+            window.electronAPI.sendMessage('sync-state-to-main', simplifiedState);
+        }
+    }, 250);
+
+    // --- ESCUCHA ACCIONES DESDE EL MINI PLAYER ---
+    if (window.electronAPI) {
+        window.electronAPI.on('execute-control-action', (action) => {
+            if (!appState.playerControls) return;
+
+            if (typeof action === 'string' && appState.playerControls[action]) {
+                appState.playerControls[action]();
+            } 
+            else if (typeof action === 'object' && appState.playerControls[action.type]) {
+                appState.playerControls[action.type](action.value);
+            }
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initializeApp);

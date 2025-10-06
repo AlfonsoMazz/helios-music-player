@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alfonso Music Player</title>
+    <title>Helios by Almazz</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -412,172 +412,7 @@
             box-shadow: 0 0 15px 5px rgba(255, 191, 0, 0.6);
             border: 1px solid rgba(255, 191, 0, 0.5);
         }
-
-
-        /* =============================================================== */
-        /* =================== MINI-PLAYER STYLES START ================== */
-        /* =============================================================== */
-
-        #mini-player-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 320px;
-            aspect-ratio: 1 / 1;
-            min-width: 280px;
-            min-height: 150px;
-            background-color: #181818;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            z-index: 10000;
-            resize: both;
-            overflow: hidden;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease-out;
-            display: flex;
-        }
-        #mini-player-container.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #mp-cover-art-main {
-            transition: opacity 0.4s ease-in-out;
-        }
         
-        #mp-bg-cover {
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-        }
-        #mini-player-container:hover #mp-bg-cover {
-            opacity: 1;
-        }
-
-        #mp-hover-controls {
-            background: rgba(0,0,0,0.6);
-        }
-        
-        #mp-track-info {
-            position: absolute;
-            left: 0;
-            right: 0;
-            z-index: 20;
-            padding: 1rem;
-            background: none;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-            text-align: center;
-        }
-        #mini-player-container:hover #mp-track-info {
-            opacity: 1;
-            top: auto;
-            bottom: 9rem;
-        }
-
-        #mp-volume-wrapper > button {
-            opacity: 1;
-            position: absolute;
-            transition: opacity 0.2s ease-in-out;
-        }
-        #mp-volume-wrapper > div {
-            width: 0;
-            opacity: 0;
-            pointer-events: none;
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
-            display: flex;
-            align-items: center;
-        }
-        #mp-volume-wrapper:hover > button {
-            opacity: 0;
-            pointer-events: none;
-        }
-        #mp-volume-wrapper:hover > div {
-            width: 80px;
-            opacity: 1;
-            pointer-events: auto;
-        }
-        #mp-volume-bar {
-            width: 100%;
-            height: 4px;
-        }
-        #mp-volume-bar::-webkit-slider-thumb {
-            opacity: 1;
-        }
-        
-        #mp-progress-bar-fg > div {
-            position: absolute;
-            right: 0;
-            top: 50%;
-            height: 12px;
-            width: 12px;
-            background-color: white;
-            border-radius: 9999px;
-            transform: translate(50%, -50%) scale(0);
-            transition: transform 0.2s ease-in-out;
-        }
-        #mp-progress-container:hover #mp-progress-bar-fg > div {
-            transform: translate(50%, -50%) scale(1);
-        }
-        #mp-progress-bar-bg {
-             transition: height 0.2s ease-in-out;
-        }
-        #mp-progress-container:hover #mp-progress-bar-bg {
-            height: 6px;
-        }
-        #mp-progress-bar-fg {
-            transition: none;
-        }
-
-        /* --- INICIO: ESTILOS FINALES PARA MODO BARRA --- */
-
-        #mp-bar-view {
-            display: none;
-        }
-
-        #mini-player-container.is-bar-mode {
-            height: 64px;
-            min-height: 64px;
-            aspect-ratio: auto;
-            min-width: 500px;
-        }
-
-        .is-bar-mode #mp-square-view {
-            display: none;
-        }
-        .is-bar-mode #mp-bar-view {
-            display: flex !important;
-        }
-
-        .is-bar-mode #mp-progress-container-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0.75rem;
-            right: 0.75rem;
-            padding: 0 0 0.5rem 0;
-            width: auto;
-        }
-
-        /* CAMBIO: Adelgazar la barra de progreso */
-        .is-bar-mode #mp-progress-bar-bg-bar {
-            height: 2px;
-            transition: height 0.2s ease-in-out;
-        }
-        .is-bar-mode #mp-progress-container-bar:hover #mp-progress-bar-bg-bar {
-            height: 4px;
-        }
-
-        #global-volume-bar {
-            -webkit-appearance: slider-vertical;
-        }
-
-        /* --- FIN: ESTILOS FINALES PARA MODO BARRA --- */
-
-        /* =============================================================== */
-        /* =================== MINI-PLAYER STYLES END ==================== */
-        /* =============================================================== */
 
     </style>
 </head>
@@ -608,6 +443,6 @@
     </div>
 
     <audio id="audio-player"></audio>
-    <script src="main.js" type="module"></script>
+    <script src="renderer.js" type="module"></script>
 </body>
 </html>

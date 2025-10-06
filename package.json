@@ -1,0 +1,24 @@
+{
+  "name": "helios-music-player-by-almazzz",
+  "version": "1.0.0",
+  "description": "a minimalist and efficient music player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlfonsoMazz/helios-music-player.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlfonsoMazz/helios-music-player/issues"
+  },
+  "homepage": "https://github.com/AlfonsoMazz/helios-music-player#readme",
+  "devDependencies": {
+    "electron": "^25.2.0",
+    "electron-reloader": "^1.2.3"
+  }
+}

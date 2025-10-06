@@ -1,28 +1,10 @@
 // src/js/views/miniPlayer.js
 
-let appStateRef;
-
-// --- Elementos del DOM ---
-// Vista Cuadrada
-let miniPlayerContainer, dragHandle, closeBtn, bgCover, mainCoverArt;
-let titleEl, artistEl;
-let playPauseBtn, playIcon, pauseIcon, prevBtn, nextBtn;
-let shuffleBtn, repeatBtn, volumeBtn, volumeBar;
-let progressBarContainer, progressBarFg, mpCurrentTime, mpTotalTime;
-
-// Vista Barra
-let dragHandleBar, closeBtnBar; // <--- AGREGADO
-let playPauseBtnBar, playIconBar, pauseIconBar, prevBtnBar, nextBtnBar;
-let shuffleBtnBar, repeatBtnBar, volumeBtnBar;
-let coverBar, titleBar, artistBar;
-let progressBarContainerBar, progressBarFgBar;
-
-// Elemento Global
-let globalVolumePopup, globalVolumeBar; // <--- AGREGADO
+// --- Declaraciones de variables del DOM ---
+let miniPlayerContainer, dragHandle, closeBtn, bgCover, mainCoverArt, titleEl, artistEl, playPauseBtn, playIcon, pauseIcon, prevBtn, nextBtn, shuffleBtn, repeatBtn, volumeBtn, volumeBar, progressBarContainer, progressBarFg, mpCurrentTime, mpTotalTime;
+let dragHandleBar, closeBtnBar, playPauseBtnBar, playIconBar, pauseIconBar, prevBtnBar, nextBtnBar, shuffleBtnBar, repeatBtnBar, volumeBtnBar, coverBar, titleBar, artistBar, progressBarContainerBar, progressBarFgBar;
+let globalVolumePopup, globalVolumeBar;
 let volumePopupTimeout;
-
-
-// --- Estado de la animación ---
 let animationFrameId = null;
 
 // --- Íconos SVG ---
@@ -31,39 +13,16 @@ const repeatIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 
 const volumeIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path fill="currentColor" d="M64 96v64a8 8 0 0 1-8 8h-8a8 8 0 0 1-8-8V96a8 8 0 0 1 8-8h8a8 8 0 0 1 8 8Zm32-72h-8a8 8 0 0 0-8 8v192a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V32a8 8 0 0 0-8-8Zm40 32h-8a8 8 0 0 0-8 8v128a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V64a8 8 0 0 0-8-8Zm40 32h-8a8 8 0 0 0-8 8v64a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V96a8 8 0 0 0-8-8Zm40-16h-8a8 8 0 0 0-8 8v96a8 8 0 0 0 8 8h8a8 8 0 0 0 8-8V80a8 8 0 0 0-8-8Z"/></svg>`;
 const muteIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path fill="currentColor" d="M60 96v64a12 12 0 0 1-24 0V96a12 12 0 0 1 24 0m-3.12-64.07a12 12 0 1 0-17.76 16.14L76 88.64V224a12 12 0 0 0 24 0V115l16 17.6V192a12 12 0 0 0 24 0v-33l59.12 65a12 12 0 0 0 17.76-16.14ZM128 80.54a12 12 0 0 0 12-12V64a12 12 0 0 0-24 0v4.54a12 12 0 0 0 12 12m40 44a12 12 0 0 0 12-12V96a12 12 0 0 0-24 0v16.54a12 12 0 0 0 12 12M208 68a12 12 0 0 0-12 12v76.54a12 12 0 0 0 24 0V80a12 12 0 0 0-12-12"/></svg>`;
 
-// --- Lógica de Arrastre Optimizada ---
+// --- Lógica de Arrastre (sin cambios) ---
 let isDragging = false;
 let initialTx, initialTy, mousePressX, mousePressY;
+function onDragStart(e) { /* ... */ }
+function onDragMove(e) { /* ... */ }
+function onDragEnd(e) { /* ... */ }
+onDragStart = function(e) { if (e.target.closest('button') || e.target.closest('input[type="range"]')) return; isDragging = true; mousePressX = e.clientX; mousePressY = e.clientY; const t = new DOMMatrix(window.getComputedStyle(miniPlayerContainer).transform); initialTx = t.m41; initialTy = t.m42; miniPlayerContainer.style.transition = 'none'; window.addEventListener('mousemove', onDragMove, { passive: false }); window.addEventListener('mouseup', onDragEnd, { once: true }); };
+onDragMove = function(e) { if (!isDragging) return; e.preventDefault(); const t = e.clientX - mousePressX, n = e.clientY - mousePressY; miniPlayerContainer.style.transform = `translate(${initialTx+t}px, ${initialTy+n}px)`; };
+onDragEnd = function(e) { if (!isDragging) return; isDragging = false; const t = miniPlayerContainer.getBoundingClientRect(); miniPlayerContainer.style.left = `${t.left}px`; miniPlayerContainer.style.top = `${t.top}px`; miniPlayerContainer.style.transform = 'none'; miniPlayerContainer.style.transition = 'opacity 0.3s ease-out'; window.removeEventListener('mousemove', onDragMove); };
 
-function onDragStart(e) {
-    if (e.target.closest('button') || e.target.closest('input[type="range"]')) return;
-    isDragging = true;
-    mousePressX = e.clientX;
-    mousePressY = e.clientY;
-    const transformMatrix = new DOMMatrix(window.getComputedStyle(miniPlayerContainer).transform);
-    initialTx = transformMatrix.m41;
-    initialTy = transformMatrix.m42;
-    miniPlayerContainer.style.transition = 'none';
-    window.addEventListener('mousemove', onDragMove, { passive: false });
-    window.addEventListener('mouseup', onDragEnd, { once: true });
-}
-function onDragMove(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-    const dx = e.clientX - mousePressX;
-    const dy = e.clientY - mousePressY;
-    miniPlayerContainer.style.transform = `translate(${initialTx + dx}px, ${initialTy + dy}px)`;
-}
-function onDragEnd(e) {
-    if (!isDragging) return;
-    isDragging = false;
-    const finalRect = miniPlayerContainer.getBoundingClientRect();
-    miniPlayerContainer.style.left = `${finalRect.left}px`;
-    miniPlayerContainer.style.top = `${finalRect.top}px`;
-    miniPlayerContainer.style.transform = 'none';
-    miniPlayerContainer.style.transition = 'opacity 0.3s ease-out';
-    window.removeEventListener('mousemove', onDragMove);
-}
 
 // --- Lógica de Utilidad ---
 function formatTime(seconds) { if (isNaN(seconds)) return '0:00'; const minutes = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return `${minutes}:${secs < 10 ? '0' : ''}${secs}`; }
@@ -73,112 +32,95 @@ const resizeObserver = new ResizeObserver(entries => {
         miniPlayerContainer.classList.toggle('is-bar-mode', width / height > 1.8);
     }
 });
-function updateRangeFill(input) {
-    if (!input) return;
-    const value = (input.value - input.min) / (input.max - input.min) * 100;
-    input.style.background = `linear-gradient(to right, #ffffff ${value}%, #535353 ${value}%)`;
-}
-function updateMiniPlayerProgress() {
-    if (!appStateRef || !appStateRef.isPlaying || !miniPlayerContainer.classList.contains('visible')) {
-        animationFrameId = null; 
-        return;
-    }
-    const currentTrack = appStateRef.playingContext?.originalTracks?.[appStateRef.playingContext.trackIndex];
-    if (currentTrack && currentTrack.duration > 0) {
-        const progressPercent = (appStateRef.currentTime / currentTrack.duration) * 100;
-        if(progressBarFg) progressBarFg.style.width = `${progressPercent}%`;
-        if(progressBarFgBar) progressBarFgBar.style.width = `${progressPercent}%`;
-    } else {
-        if(progressBarFg) progressBarFg.style.width = '0%';
-        if(progressBarFgBar) progressBarFgBar.style.width = '0%';
-    }
-    animationFrameId = requestAnimationFrame(updateMiniPlayerProgress);
-}
+function updateRangeFill(input) { if (!input) return; const value = (input.value - input.min) / (input.max - input.min) * 100; input.style.background = `linear-gradient(to right, #ffffff ${value}%, #535353 ${value}%)`; }
 
-function syncButtonsUI() {
-    if (!appStateRef) return;
-    [shuffleBtn, shuffleBtnBar].forEach(btn => btn?.classList.toggle('active-icon', appStateRef.isShuffled));
-    [repeatBtn, repeatBtnBar].forEach(btn => {
-        if (!btn) return;
-        btn.classList.remove('active-icon', 'amber-icon');
-        if (appStateRef.repeatState === 1) btn.classList.add('active-icon');
-        else if (appStateRef.repeatState === 2) btn.classList.add('amber-icon');
-    });
+
+export function initMiniPlayer(localState) {
     
-    const isMuted = appStateRef.volume === 0 || appStateRef.isMuted;
-    [volumeBtn, volumeBtnBar].forEach(btn => {
-        if (btn) {
-            btn.innerHTML = isMuted ? muteIconSVG : volumeIconSVG;
+    // --- Lógica de UI interna ---
+    function updateMiniPlayerProgress() {
+        if (!localState || !localState.isPlaying || !miniPlayerContainer.classList.contains('visible')) {
+            animationFrameId = null;
+            return;
         }
-    });
-}
-
-function update() {
-    if (!miniPlayerContainer || !appStateRef) return;
-    const currentTrack = appStateRef.playingContext?.originalTracks?.[appStateRef.playingContext.trackIndex];
-    if (currentTrack) {
-        mainCoverArt.src = currentTrack.cover;
-        bgCover.style.backgroundImage = `url('${currentTrack.cover}')`;
-        mpTotalTime.textContent = formatTime(currentTrack.duration);
-        titleEl.textContent = currentTrack.title;
-        artistEl.textContent = currentTrack.artist;
-        coverBar.src = currentTrack.cover;
-        titleBar.textContent = currentTrack.title;
-        artistBar.textContent = currentTrack.artist;
-        if (currentTrack.duration > 0) {
-            const progressPercent = (appStateRef.currentTime / currentTrack.duration) * 100;
-            progressBarFg.style.width = `${progressPercent}%`;
-            progressBarFgBar.style.width = `${progressPercent}%`;
-            mpCurrentTime.textContent = formatTime(appStateRef.currentTime);
+        const currentTrack = localState.track;
+        if (currentTrack && currentTrack.duration > 0) {
+            const progressPercent = (localState.currentTime / currentTrack.duration) * 100;
+            if(progressBarFg) progressBarFg.style.width = `${progressPercent}%`;
+            if(progressBarFgBar) progressBarFgBar.style.width = `${progressPercent}%`;
         } else {
+            if(progressBarFg) progressBarFg.style.width = '0%';
+            if(progressBarFgBar) progressBarFgBar.style.width = '0%';
+        }
+        animationFrameId = requestAnimationFrame(updateMiniPlayerProgress);
+    }
+    
+    function syncButtonsUI() {
+        if (!localState) return;
+        [shuffleBtn, shuffleBtnBar].forEach(btn => btn?.classList.toggle('active-icon', localState.isShuffled));
+        [repeatBtn, repeatBtnBar].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove('active-icon', 'amber-icon');
+            if (localState.repeatState === 1) btn.classList.add('active-icon');
+            else if (localState.repeatState === 2) btn.classList.add('amber-icon');
+        });
+        const isMuted = localState.volume === 0 || localState.isMuted;
+        [volumeBtn, volumeBtnBar].forEach(btn => {
+            if (btn) btn.innerHTML = isMuted ? muteIconSVG : volumeIconSVG;
+        });
+    }
+
+    function update() {
+        if (!miniPlayerContainer || !localState) return;
+        const currentTrack = localState.track;
+        if (currentTrack) {
+            mainCoverArt.src = currentTrack.cover;
+            bgCover.style.backgroundImage = `url('${currentTrack.cover}')`;
+            mpTotalTime.textContent = formatTime(currentTrack.duration);
+            titleEl.textContent = currentTrack.title;
+            artistEl.textContent = currentTrack.artist;
+            coverBar.src = currentTrack.cover;
+            titleBar.textContent = currentTrack.title;
+            artistBar.textContent = currentTrack.artist;
+            if (currentTrack.duration > 0) {
+                const progressPercent = (localState.currentTime / currentTrack.duration) * 100;
+                progressBarFg.style.width = `${progressPercent}%`;
+                progressBarFgBar.style.width = `${progressPercent}%`;
+                mpCurrentTime.textContent = formatTime(localState.currentTime);
+            } else {
+                progressBarFg.style.width = '0%';
+                progressBarFgBar.style.width = '0%';
+                mpCurrentTime.textContent = formatTime(0);
+            }
+        } else {
+            mainCoverArt.src = 'https://placehold.co/320x320/121212/808080?text=...';
+            bgCover.style.backgroundImage = 'none';
+            mpTotalTime.textContent = '0:00';
+            titleEl.textContent = 'Título no disponible';
+            artistEl.textContent = '...';
+            coverBar.src = 'https://placehold.co/80x80/121212/808080?text=...';
+            titleBar.textContent = 'No hay nada en reproducción';
+            artistBar.textContent = '...';
             progressBarFg.style.width = '0%';
             progressBarFgBar.style.width = '0%';
             mpCurrentTime.textContent = formatTime(0);
         }
-    } else {
-        mainCoverArt.src = 'https://placehold.co/320x320/121212/808080?text=...';
-        bgCover.style.backgroundImage = 'none';
-        mpTotalTime.textContent = '0:00';
-        titleEl.textContent = '...';
-        artistEl.textContent = '...';
-        coverBar.src = 'https://placehold.co/80x80/121212/808080?text=...';
-        titleBar.textContent = '...';
-        artistBar.textContent = '...';
-        progressBarFg.style.width = '0%';
-        progressBarFgBar.style.width = '0%';
-        mpCurrentTime.textContent = formatTime(0);
+        playIcon.classList.toggle('hidden', localState.isPlaying);
+        pauseIcon.classList.toggle('hidden', !localState.isPlaying);
+        playIconBar.classList.toggle('hidden', localState.isPlaying);
+        pauseIconBar.classList.toggle('hidden', !localState.isPlaying);
+        volumeBar.value = localState.volume * 100;
+        globalVolumeBar.value = localState.volume * 100;
+        updateRangeFill(volumeBar);
+        updateRangeFill(globalVolumeBar);
+        syncButtonsUI();
+        if (localState.isPlaying && !animationFrameId) {
+            animationFrameId = requestAnimationFrame(updateMiniPlayerProgress);
+        }
     }
-    playIcon.classList.toggle('hidden', appStateRef.isPlaying);
-    pauseIcon.classList.toggle('hidden', !appStateRef.isPlaying);
-    playIconBar.classList.toggle('hidden', appStateRef.isPlaying);
-    pauseIconBar.classList.toggle('hidden', !appStateRef.isPlaying);
-    volumeBar.value = appStateRef.volume * 100;
-    globalVolumeBar.value = appStateRef.volume * 100;
-    updateRangeFill(volumeBar);
-    updateRangeFill(globalVolumeBar);
-    syncButtonsUI();
-    if (appStateRef.isPlaying && !animationFrameId) {
-        animationFrameId = requestAnimationFrame(updateMiniPlayerProgress);
-    }
-}
 
-function open() { if (!miniPlayerContainer) return; update(); miniPlayerContainer.classList.remove('hidden'); setTimeout(() => miniPlayerContainer.classList.add('visible'), 10); }
-function close() {
-    if (!miniPlayerContainer) return;
-    miniPlayerContainer.classList.remove('visible');
-    setTimeout(() => miniPlayerContainer.classList.add('hidden'), 300);
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-    }
-}
-
-export function initMiniPlayer(appState) {
-    appStateRef = appState;
-    miniPlayerContainer = document.getElementById('mini-player-container');
-    if (!miniPlayerContainer) return null;
-    
     // --- Cache de elementos del DOM ---
+    miniPlayerContainer = document.getElementById('mini-player-container');
     dragHandle = document.getElementById('mp-drag-handle');
     closeBtn = document.getElementById('mp-close-btn');
     mainCoverArt = document.getElementById('mp-cover-art-main');
@@ -222,49 +164,42 @@ export function initMiniPlayer(appState) {
     [volumeBtn, volumeBtnBar].forEach(btn => btn.innerHTML = volumeIconSVG);
     
     // --- Asignar Event Listeners ---
-    [closeBtn, closeBtnBar].forEach(btn => btn.addEventListener('click', close));
-    [dragHandle, dragHandleBar].forEach(btn => btn.addEventListener('mousedown', onDragStart));
-    [playPauseBtn, playPauseBtnBar].forEach(btn => btn.addEventListener('click', () => appState.playerControls?.togglePlayPause()));
-    [nextBtn, nextBtnBar].forEach(btn => btn.addEventListener('click', () => appState.playerControls?.playNext()));
-    [prevBtn, prevBtnBar].forEach(btn => btn.addEventListener('click', () => appState.playerControls?.playPrev()));
-    [shuffleBtn, shuffleBtnBar].forEach(btn => btn.addEventListener('click', () => appState.playerControls?.toggleShuffle()));
-    [repeatBtn, repeatBtnBar].forEach(btn => btn.addEventListener('click', () => appState.playerControls?.cycleRepeatState()));
-    [volumeBtn, volumeBtnBar].forEach(btn => btn.addEventListener('click', () => appState.playerControls?.toggleMute()));
+    const returnToMain = () => window.electronAPI?.sendMessage('toggle-miniplayer');
+    [closeBtn, closeBtnBar].forEach(btn => btn?.addEventListener('click', returnToMain));
+    [dragHandle, dragHandleBar].forEach(btn => btn?.addEventListener('mousedown', onDragStart));
+    
+    [playPauseBtn, playPauseBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'togglePlayPause')));
+    [nextBtn, nextBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'playNext')));
+    [prevBtn, prevBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'playPrev')));
+    [shuffleBtn, shuffleBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'toggleShuffle')));
+    [repeatBtn, repeatBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'cycleRepeatState')));
+    [volumeBtn, volumeBtnBar].forEach(btn => btn?.addEventListener('click', () => window.electronAPI?.sendMessage('miniplayer-control-action', 'toggleMute')));
     
     [volumeBar, globalVolumeBar].forEach(bar => {
-        bar.addEventListener('input', (e) => {
+        bar?.addEventListener('input', (e) => {
             const newVolume = e.target.value / 100;
-            appState.playerControls?.setVolume(newVolume);
+            window.electronAPI?.sendMessage('miniplayer-control-action', { type: 'setVolume', value: newVolume });
             updateRangeFill(e.target);
         });
     });
 
     [progressBarContainer, progressBarContainerBar].forEach(container => {
-        container.addEventListener('click', (e) => {
+        container?.addEventListener('click', (e) => {
             const rect = container.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const width = rect.width;
             if (width > 0) {
                 const percentage = (clickX / width) * 100;
-                appState.playerControls?.seekTo(percentage);
+                window.electronAPI?.sendMessage('miniplayer-control-action', { type: 'seekTo', value: percentage });
             }
         });
     });
 
     // --- Lógica para el pop-up de volumen global ---
-    const showVolumePopup = () => {
-        clearTimeout(volumePopupTimeout);
-        const rect = volumeBtnBar.getBoundingClientRect();
-        globalVolumePopup.style.left = `${rect.left + rect.width / 2}px`;
-        globalVolumePopup.style.top = `${rect.top}px`;
-        globalVolumePopup.style.transform = `translate(-50%, -100%) translateY(-12px)`;
-        globalVolumePopup.classList.remove('hidden');
-    };
-    const hideVolumePopup = () => {
-        volumePopupTimeout = setTimeout(() => {
-            globalVolumePopup.classList.add('hidden');
-        }, 250);
-    };
+    const showVolumePopup = () => { /* ... sin cambios ... */ };
+    const hideVolumePopup = () => { /* ... sin cambios ... */ };
+    showVolumePopup = () => { clearTimeout(volumePopupTimeout); const rect = volumeBtnBar.getBoundingClientRect(); globalVolumePopup.style.left = `${rect.left+rect.width/2}px`; globalVolumePopup.style.top = `${rect.top}px`; globalVolumePopup.style.transform = `translate(-50%, -100%) translateY(-12px)`; globalVolumePopup.classList.remove('hidden'); };
+    hideVolumePopup = () => { volumePopupTimeout = setTimeout(() => { globalVolumePopup.classList.add('hidden'); }, 250); };
     volumeBtnBar.addEventListener('mouseenter', showVolumePopup);
     volumeBtnBar.addEventListener('mouseleave', hideVolumePopup);
     globalVolumePopup.addEventListener('mouseenter', () => clearTimeout(volumePopupTimeout));
@@ -274,6 +209,7 @@ export function initMiniPlayer(appState) {
     updateRangeFill(volumeBar);
     updateRangeFill(globalVolumeBar);
     
-    console.log('Módulo del Mini-Reproductor completamente refinado y funcional.');
-    return { open, close, update };
+    console.log('Módulo del Mini-Reproductor inicializado y escuchando.');
+    
+    return { update };
 }
