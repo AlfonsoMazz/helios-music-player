@@ -502,6 +502,7 @@ export function initPlayer(audioPlayer, appState, updateSidebarCallback, updateM
 
     audioPlayer.addEventListener('loadedmetadata', () => {
         totalTimeEl.textContent = formatTime(audioPlayer.duration);
+        appState.miniPlayerControls?.update(); // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
     });
     
     audioPlayer.addEventListener('error', (e) => {
