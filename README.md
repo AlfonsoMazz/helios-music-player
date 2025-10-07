@@ -12,10 +12,10 @@ A glimpse into the clean, modern, and powerful interface of Helios.
 
 | Main Library View (Home) | Detailed Playlist View |
 | :------------------------------: | :-----------------------------: |
-| ![Helios Home View](./assets/home-view.png) | ![Helios Playlist View](./assets/playlist-view.png) |
+| ![Helios Home View](./src/assets/home-view.png) | ![Helios Playlist View](./src/assets/playlist-view.png) |
 | **Floating Mini-Player (Square & Bar Modes)** |
-| ![Helios Square Mini-Player](./assets/miniplayer-square.png) |
-| ![Helios Bar Mini-Player](./assets/miniplayer-bar.png) |
+| ![Helios Square Mini-Player](./src/assets/miniplayer-square.png) |
+| ![Helios Bar Mini-Player](./src/assets/miniplayer-bar.png) |
 
 ---
 
