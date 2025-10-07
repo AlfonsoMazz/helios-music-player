@@ -1,107 +1,111 @@
-# 🎵 Helios Music Player by Almazz
+# 🎵 Helios - A Music Player for People Who Love Audio
 
-Un reproductor de música de escritorio, personalizable y offline, construido con tecnologías web modernas y **empaquetado con Electron** para funcionar como una aplicación nativa. Diseñado para reproducir bibliotecas de música locales con un enfoque en la calidad de audio, una interfaz limpia y un rendimiento fluido.
+Helios is a minimalist, quality-focused desktop music player born from frustration with existing platforms. Tired of streaming services not having the music I wanted at the desired quality, and of bloated offline players saturated with useless options and unappealing interfaces, I decided to build my own solution.
 
----
-
-## ✨ Características Clave
-
-### Arquitectura de Escritorio
-* **Aplicación Nativa con Electron:** El proyecto está construido sobre Electron, lo que le permite ejecutarse como una aplicación de escritorio independiente en Windows, macOS y Linux, sin depender de un navegador web.
-* **Arquitectura Multi-Ventana:** La aplicación utiliza dos ventanas separadas:
-    1.  Una **ventana principal** para la gestión de la biblioteca y la reproducción.
-    2.  Una **ventana de MiniPlayer** independiente, pequeña y sin bordes, con la funcionalidad **"Always On Top"** para flotar sobre todas las demás aplicaciones.
-* **Comunicación Inter-Proceso (IPC):** Ambas ventanas se comunican en tiempo real para mantener el estado de la reproducción perfectamente sincronizado.
-
-### Rendimiento y Carga de Biblioteca
-* **Caché Persistente (IndexedDB):** La biblioteca de música se escanea solo una vez y se guarda en la base de datos del navegador, permitiendo un arranque **casi instantáneo** en sesiones posteriores.
-* **Renderizado Asíncrono Inteligente:** La aplicación está optimizada para manejar miles de canciones sin congelar la interfaz.
-
-### Experiencia de Reproducción
-* **Mini-Reproductor Avanzado:**
-    * Una ventana **flotante, arrastrable y redimensionable** que funciona de forma independiente a la aplicación principal.
-    * **Diseño Dual:** Se adapta automáticamente a un modo "Cuadrado" (ideal para mostrar la carátula) o un modo "Barra" (una elegante barra de controles) según el usuario redimensione la ventana.
-    * **Controles Completos y Sincronizados:** Todos los controles del MiniPlayer (play, volumen, barra de progreso) están sincronizados con la aplicación principal.
-* **Cola de Reproducción Unificada:** El panel "A continuación" combina canciones añadidas manualmente y la cola generada por el orden de la playlist o el modo aleatorio.
-* **Salto Automático por Error:** El reproductor detecta archivos de audio corruptos, los salta automáticamente y muestra una notificación.
-
-### Persistencia y UI
-* **Restauración Completa de Sesión:** La aplicación recuerda y restaura todo: la última canción, el segundo exacto, el estado de los controles (Shuffle, Repeat), la ecualización y el estado visual de la UI.
-* **Ecualizador Gráfico de 10 Bandas:** Procesamiento de audio en tiempo real a través de la Web Audio API.
+This project is for audiophiles, collectors, and anyone who values a clean, fast, and local music experience.
 
 ---
 
-## 🛠️ Arquitectura y Desglose de Archivos
+## ✨ Screenshots
 
-El proyecto sigue una arquitectura de Electron con un **proceso principal** (que gestiona las ventanas) y **procesos de renderizado** (las ventanas con la interfaz web).
+A glimpse into the clean, modern, and powerful interface of Helios.
 
-### Archivos de Electron (Proceso Principal)
-* `package.json`: El manifiesto del proyecto. Define el nombre, versión, y gestiona las dependencias (como Electron) y los scripts de ejecución (`npm start`).
-* `main.js`: El **cerebro de la aplicación de escritorio**. Este script se ejecuta en el proceso principal de Node.js. Es responsable de:
-    1.  Crear y gestionar las ventanas del sistema operativo (`BrowserWindow`).
-    2.  Implementar la lógica de `alwaysOnTop` para el MiniPlayer.
-    3.  Manejar la comunicación (IPC) entre las diferentes ventanas.
-* `preload.js`: Actúa como un **puente seguro** entre el proceso principal (`main.js`) y los procesos de renderizado (las ventanas). Expone de forma controlada las APIs de Electron al código del frontend.
-* `.gitignore`: Especifica qué archivos (como `node_modules/`) deben ser ignorados por Git.
-
-### Archivos de la Interfaz (Procesos de Renderizado)
-* `src/index.html`: La vista HTML para la **ventana principal** de la aplicación.
-* `src/miniplayer.html`: Una vista HTML dedicada y autocontenida para la **ventana del MiniPlayer**.
-* `src/renderer.js`: (Anteriormente `main.js`) Es el **orquestador del frontend** para la ventana principal. Carga componentes, inicializa todos los módulos y gestiona el envío de actualizaciones de estado al proceso principal.
-* `src/js/miniplayer-loader.js`: Un script de arranque exclusivo para `miniplayer.html`. Inicializa la interfaz del MiniPlayer y establece los listeners para recibir actualizaciones de estado y enviar comandos.
-* `src/js/state.js`: El **cerebro del frontend**. Mantiene el estado de la aplicación para la ventana principal.
-* `src/components/*.txt`: Plantillas HTML para las secciones de la UI de la ventana principal.
+| Main Library View (Home) | Detailed Playlist View |
+| :------------------------------: | :-----------------------------: |
+| ![Helios Home View](./assets/home-view.png) | ![Helios Playlist View](./assets/playlist-view.png) |
+| **Floating Mini-Player (Square & Bar Modes)** |
+| ![Helios Square Mini-Player](./assets/miniplayer-square.png) |
+| ![Helios Bar Mini-Player](./assets/miniplayer-bar.png) |
 
 ---
 
-## 📁 Estructura del Proyecto
-/
-├── node_modules/
-├── src/
-│   ├── assets/
-│   │   └── icon2.ico
-│   ├── components/
-│   │   ├── mainView.txt
-│   │   ├── miniPlayer.txt
-│   │   ├── player.txt
-│   │   └── sidebar.txt
-│   ├── js/
-│   │   ├── views/
-│   │   │   ├── homeView.js
-│   │   │   ├── miniPlayer.js
-│   │   │   └── playlistView.js
-│   │   ├── cache.js
-│   │   ├── library.js
-│   │   ├── mainView.js
-│   │   ├── miniplayer-loader.js
-│   │   ├── player.js
-│   │   ├── queue.js
-│   │   ├── settings.js
-│   │   ├── sidebar.js
-│   │   └── state.js
-│   ├── index.html
-│   ├── miniplayer.html
-│   └── renderer.js
-├── .gitignore
-├── main.js
-├── package.json
-├── package-lock.json
-└── preload.js
+## ⭐ Key Features
+
+Helios is designed around three pillars: performance, audio quality, and a seamless user experience, demonstrated by its fluid and responsive interface.
+
+### 🚀 Performance & Library
+* **Instantaneous Startup:** Thanks to **persistent caching with IndexedDB**, your library of thousands of songs loads instantly after the first scan.
+* **Fluid Interface:** The UI is optimized to handle massive libraries without freezing or slowing down, featuring smooth transitions between views.
+* **Local Management:** Full control over your music. Simply add your folder, and Helios handles the rest.
+
+### 🎧 Playback Experience
+* **Advanced Mini-Player:** A floating, independent **"Always On Top"** window that you can place anywhere over your other applications.
+    * **Adaptive Dual-Design:** Automatically transforms from a sleek "Bar Mode" to a cover-art-focused "Square Mode" when you resize it.
+    * **Perfect Sync:** All controls (play, progress, volume) are synchronized in real-time with the main window.
+* **Superior Audio Quality:**
+    * **10-Band Graphic Equalizer:** Fine-tune the sound with a real-time pop-up EQ panel powered by the Web Audio API.
+    * Support for high-quality formats (`.flac`, `.wav`, `.mp3`, etc.).
+* **"Fast Jump" to Current Song:** Instantly navigate to the currently playing track's position in any playlist with a single click on the cover art in the sidebar.
+* **Slide-Out Play Queue:** Manage what's next with a dedicated panel that slides smoothly into view. Supports **Drag & Drop** for reordering your upcoming tracks.
+* **Error Detection:** If a song is corrupt, Helios will automatically skip it and notify you, keeping your music uninterrupted.
+
+### 🎨 UI & Customization
+* **Polished & Interactive UI:** Experience thoughtful micro-interactions that enhance usability, like hover-to-play buttons appearing on track numbers and album art.
+* **Full Session Restore:** Helios remembers everything: the last song you listened to, the exact second, the shuffle/repeat state, and your equalizer settings, providing a seamless continuation of your listening session.
+* **Clean, Modern Design:** An interface inspired by the best music apps, but without the clutter. Built with a focus on readability and aesthetics.
 
 ---
 
-## 🚀 Cómo Ejecutar en Modo Desarrollo
+## 🛠️ Tech Stack
 
-Para probar la aplicación en un entorno de escritorio local, necesitas tener instalado [Node.js](https://nodejs.org/).
+This project is built with modern web technologies, packaged as a native, cross-platform desktop application.
 
-1.  Abre la carpeta raíz del proyecto en tu terminal (o la terminal integrada de VS Code).
-2.  Si es la primera vez, instala todas las dependencias con el comando:
+* **Core Framework:** **Electron**
+* **Frontend:** HTML5, CSS3, and **JavaScript (ES6+ Modules)** (no frameworks like React or Vue!)
+* **Styling:** **Tailwind CSS** for rapid and consistent design.
+* **Database (Cache):** **IndexedDB** for library persistence.
+* **User Settings:** **localStorage**
+* **Metadata Parsing:** `jsmediatags`
+
+---
+
+## 🚀 Getting Started (Development Mode)
+
+You need to have [Node.js](https://nodejs.org/) and npm installed on your system.
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/helios.git](https://github.com/your-username/helios.git)
+    cd helios
+    ```
+
+2.  **Install dependencies:**
     ```bash
     npm install
     ```
-3.  Una vez instaladas, ejecuta la aplicación con:
+
+3.  **Run the application:**
     ```bash
     npm start
     ```
 
-Esto lanzará la aplicación en su propia ventana de escritorio. Gracias a `electron-reloader`, cualquier cambio que guardes en el código fuente refrescará la aplicación automáticamente.
+The application will launch in a desktop window. Thanks to `electron-reloader`, any changes you save in the source code will automatically refresh the app.
+
+---
+
+## 🗺️ Roadmap (Potential Future Features)
+
+Helios is an evolving project. Some ideas for the future include:
+* [ ] Theming support (light/dark modes).
+* [ ] Built-in metadata editor.
+* [ ] Audio visualizers.
+* [ ] Lyrics support.
+* [ ] Plugin system to extend functionality.
+
+---
+
+## 🤝 How to Contribute
+
+Contributions are welcome! If you have ideas, suggestions, or want to fix a bug, please open an "Issue" to discuss it or submit a "Pull Request."
+
+1.  Fork the Project.
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4.  Push to the Branch (`git push origin feature/AmazingFeature`).
+5.  Open a Pull Request.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
