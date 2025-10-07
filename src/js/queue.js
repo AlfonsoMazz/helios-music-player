@@ -31,7 +31,7 @@ function renderQueue(appState, force = false) {
     if (manualQueue.length > 0) {
         const manualHeader = document.createElement('h4');
         manualHeader.className = 'px-2 pt-2 text-xs font-bold text-gray-400 uppercase tracking-wider';
-        manualHeader.textContent = 'Añadido por el usuario';
+        manualHeader.textContent = 'Added by the user';
         queueListEl.appendChild(manualHeader);
 
         const manualContainer = document.createElement('div');
@@ -62,7 +62,7 @@ function renderQueue(appState, force = false) {
     if (naturalQueue.length > 0) {
         const naturalHeader = document.createElement('h4');
         naturalHeader.className = 'px-2 pt-4 text-xs font-bold text-gray-400 uppercase tracking-wider';
-        naturalHeader.textContent = 'A continuación en la playlist';
+        naturalHeader.textContent = 'Next Songs';
         queueListEl.appendChild(naturalHeader);
         
         naturalQueue.forEach((track) => {

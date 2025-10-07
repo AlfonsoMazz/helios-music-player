@@ -190,7 +190,7 @@ export function initSidebar(appState, mainViewControls) {
 
         // LÓGICA DE FEEDBACK VISUAL
         if (appState.isScanning) {
-            playlistContainer.innerHTML = `<p class="text-xs text-gray-500 px-2 animate-pulse">Escaneando y guardando biblioteca...</p>`;
+            playlistContainer.innerHTML = `<p class="text-xs text-gray-500 px-2 animate-pulse">Scanning...</p>`;
             return;
         }
 

@@ -84,7 +84,7 @@ function showContextMenu(x, y, track, appState) {
     contextMenu.style.top = `${y}px`;
     contextMenu.style.left = `${x}px`;
     contextMenu.classList.remove('hidden');
-    contextMenu.innerHTML = '<button class="context-menu-item" id="ctx-add-to-queue">Añadir a la cola</button>';
+    contextMenu.innerHTML = '<button class="context-menu-item" id="ctx-add-to-queue">Add to queue</button>';
     document.getElementById('ctx-add-to-queue').onclick = () => {
         appState.playQueue.push(track);
         if (appState.queueControls && typeof appState.queueControls.renderQueue === 'function') {
@@ -191,7 +191,7 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                     </div>
                     <div class="flex flex-col gap-2">
                         <h2 id="playlist-name" class="text-5xl font-bold text-white"></h2>
-                        <p id="playlist-metadata" class="text-sm text-gray-300">${songCount} canciones, ${formatTotalDuration(totalDuration)}</p>
+                        <p id="playlist-metadata" class="text-sm text-gray-300">${songCount} Songs, ${formatTotalDuration(totalDuration)}</p>
                     </div>
                 </div>
             </div>
@@ -201,15 +201,15 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                     <div id="default-controls" class="flex items-center gap-4">
                         <button id="show-search-btn" class="text-gray-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg></button>
                         <div class="relative">
-                            <button id="playlist-sort-btn" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17 4V2.067a.5.5 0 0 1 .82-.384l4.12 3.433a.5.5 0 0 1-.321.884H2V4h15ZM2 18h20v2H2v-2Zm0-7h20v2H2v-2Z"/></svg><span>Ordenar</span></button>
+                            <button id="playlist-sort-btn" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17 4V2.067a.5.5 0 0 1 .82-.384l4.12 3.433a.5.5 0 0 1-.321.884H2V4h15ZM2 18h20v2H2v-2Zm0-7h20v2H2v-2Z"/></svg><span>Sort by</span></button>
                             <div id="playlist-sort-panel" class="hidden absolute top-full right-0 mt-2 w-48 bg-[#282828] rounded-lg shadow-lg z-50 p-2">
-                                <button class="sort-option" data-sort-by="default">Orden por defecto</button><button class="sort-option" data-sort-by="alpha-asc">Título (A-Z)</button><button class="sort-option" data-sort-by="alpha-desc">Título (Z-A)</button><button class="sort-option" data-sort-by="date-desc">Más reciente</button><button class="sort-option" data-sort-by="date-asc">Más antiguo</button>
+                                <button class="sort-option" data-sort-by="default">Default order</button><button class="sort-option" data-sort-by="alpha-asc">Title (A-Z)</button><button class="sort-option" data-sort-by="alpha-desc">Title (Z-A)</button><button class="sort-option" data-sort-by="date-desc">Newest</button><button class="sort-option" data-sort-by="date-asc">Older</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div id="track-list-header" class="grid grid-cols-[auto_4fr_3fr_auto] gap-4 text-gray-400 border-b border-gray-700 p-2 text-sm uppercase tracking-wider mt-4">
-                    <div class="text-center">#</div><div>Título</div><div>Álbum</div><div class="text-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v6h6v-2h-4z"></path></svg></div>
+                    <div class="text-center">#</div><div>Title</div><div>Album</div><div class="text-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path><path d="M13 7h-2v6h6v-2h-4z"></path></svg></div>
                 </div>
                 <div id="track-list" class="mt-4">${placeholdersHTML}</div>
             </div>

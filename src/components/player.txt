@@ -3,7 +3,7 @@
         <div id="next-in-queue-container" class="hidden items-center space-x-3 text-sm border border-gray-800 rounded-lg p-1 hover:bg-white/10">
             <img id="next-track-img" src="" class="w-10 h-10 rounded">
             <div class="truncate">
-                <p class="text-xs text-gray-400">A continuación</p>
+                <p class="text-xs text-gray-400">Next Song:</p>
                 <div class="overflow-hidden">
                     <p id="next-track-title" class="text-white font-medium whitespace-nowrap">
                         <span>...</span>
@@ -48,7 +48,7 @@ class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 
 </div>
 <div id="queue-panel">
     <div class="p-4 border-b border-gray-800 flex justify-between items-center">
-        <h3 class="text-white font-bold text-lg">A continuación</h3>
+        <h3 class="text-white font-bold text-lg">Queue list</h3>
         <button id="clear-queue-btn" class="text-gray-400 hover:text-white transition-colors" title="Limpiar cola">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="currentColor" d="M26 20h-6v-2h6zm4 8h-6v-2h6zm-2-4h-6v-2h6z"/><path fill="currentColor" d="M17.003 20a4.895 
  4.895 0 0 0-2.404-4.173L22 3l-1.73-1l-7.577 13.126a5.699 5.699 0 0 0-5.243 1.503C3.706 20.24 3.996 28.682 4.01 
