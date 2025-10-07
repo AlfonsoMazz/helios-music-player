@@ -108,3 +108,91 @@ Contributions are welcome! If you have ideas, suggestions, or want to fix a bug,
 ## 📄 License
 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
+
+---
+
+## 🏛️ Project Architecture & File Breakdown
+
+Helios is built on Electron, which splits the application into two main processes: the **Main Process** (which acts as the backend and manages windows) and the **Renderer Processes** (which are the windows containing the user interface, essentially a webpage).
+
+### 📂 Electron Core (Main Process)
+
+These files manage the desktop application itself, the windows, and low-level communication.
+
+* `main.js`
+    * **What it does:** This is the **brain and entry point** of the Electron application. It runs in a Node.js environment, not in the browser.
+    * **Responsibilities:** It creates the operating system windows (`BrowserWindow`) for the main application and the Mini-Player. It manages the communication between these windows (IPC), the application's lifecycle events (open, close), and native functionality like "Always On Top".
+    * **Interacts with:** `preload.js` (for secure communication), `index.html`, and `miniplayer.html` (by loading them into the windows).
+
+* `preload.js`
+    * **What it does:** It acts as a **secure bridge** between the Node.js environment (`main.js`) and the browser environment of the windows.
+    * **Responsibilities:** It securely exposes functions from the Main Process to the Renderer Process through the `window.electronAPI` object. This prevents the web interface from having direct access to powerful and potentially dangerous Node.js functions.
+    * **Interacts with:** `main.js` (receives and sends IPC messages) and the renderer files like `renderer.js` and `miniplayer-loader.js` (provides them with the API to communicate).
+
+### 🖥️ Frontend (Renderer Processes)
+
+These files build and control everything the user sees and interacts with.
+
+* `index.html`
+    * **What it does:** This is the HTML skeleton for the **main application window**.
+    * **Interacts with:** It loads `renderer.js`, which is the script that brings it to life with functionality.
+
+* `miniplayer.html`
+    * **What it does:** This is the self-contained HTML skeleton for the **Mini-Player window**.
+    * **Interacts with:** It loads `miniplayer-loader.js` for its internal logic.
+
+* `renderer.js`
+    * **What it does:** This is the **main frontend orchestrator** for `index.html`.
+    * **Responsibilities:** It dynamically loads the UI components (`player.txt`, `sidebar.txt`, etc.), initializes all application modules (player, library, queue, etc.), and establishes the communication flows between them.
+    * **Interacts with:** Practically all other `.js` files. It imports and initializes modules, manipulates the DOM, and uses `preload.js` to communicate with `main.js`.
+
+* `miniplayer-loader.js`
+    * **What it does:** This is the **exclusive JavaScript entry point for the Mini-Player**.
+    * **Responsibilities:** Its sole task is to initialize the Mini-Player's logic (`miniPlayer.js`) and set up the listener that receives state updates from the main window via `main.js`.
+    * **Interacts with:** `miniPlayer.js` (which it initializes) and `preload.js` (to receive data and send actions).
+
+### 🧩 Application Logic (JS Modules)
+
+The functional heart of the application, divided into modules with unique responsibilities.
+
+* `js/state.js`
+    * **What it does:** It's the **single source of truth**. It contains the `appState` object that stores all real-time information: the current song, playback status, the loaded library, volume, etc.
+    * **Interacts with:** It is imported by almost all other modules. Some read from it (to render the UI), and others write to it (to update the state).
+
+* `js/player.js`
+    * **What it does:** Controls all **audio playback logic**.
+    * **Responsibilities:** It manages the `<audio>` element, the equalizer (Web Audio API), the logic for play/pause, next/previous, shuffle, repeat, and handling file errors.
+    * **Interacts with:** `appState` (which it constantly modifies), `renderer.js` (which initializes it), and calls callback functions to update the UI in `sidebar.js` and `mainView.js`.
+
+* `js/library.js` & `js/cache.js`
+    * **What they do:** They manage the music library. `library.js` reads file metadata and builds the folder/track tree, while `cache.js` is responsible for **saving and loading that tree into the IndexedDB database** for a near-instant startup.
+    * **Interact with:** `renderer.js` (which initiates the loading) and `appState` (where the final library is stored).
+
+* `js/mainView.js`, `js/views/homeView.js`, `js/views/playlistView.js`
+    * **What they do:** This set of files manages the **main content view**.
+    * **Responsibilities:** `mainView.js` acts as a controller that decides which view to display. `homeView.js` renders the home screen with playlist cards. `playlistView.js` renders the detailed track list for a selected playlist.
+    * **Interact with:** `appState` (to get the data to display) and `player.js` (to start playback when a user clicks a song).
+
+* `js/sidebar.js`
+    * **What it does:** Controls the **left sidebar**.
+    * **Responsibilities:** It renders the playlist/folder tree, manages folder expansion/collapse, and updates the "Now Playing" section at the bottom.
+    * **Interacts with:** `mainView.js` (to tell it which playlist to display) and `player.js` (receives information about the current song to display it).
+
+* `js/views/miniPlayer.js`
+    * **What it does:** Contains all the **UI logic for the Mini-Player** window itself.
+    * **Responsibilities:** It updates the cover art, title, and progress bar. It manages the design switch between "square" and "bar" modes. It sends user actions (clicks on play, etc.) back to the main window.
+    * **Interacts with:** `miniplayer-loader.js` (which initializes it) and `preload.js`.
+
+* `js/settings.js` & `js/queue.js`
+    * **What they do:** `settings.js` handles the persistence of user settings (volume, shuffle state, last session) in `localStorage`. `queue.js` manages the logic and UI of the play queue panel.
+    * **Interact with:** `settings.js` is used by `appState` on startup and is called by various modules to save changes. `queue.js` interacts with `player.js` to get the list of upcoming tracks.
+
+### 🧱 Components & Configuration
+
+* `components/*.txt`
+    * **What they are:** These are **HTML fragments** that define the structure of the main UI sections. They contain no logic.
+    * **Interact with:** `renderer.js` loads them via `fetch` and injects them into `index.html` when the application starts.
+
+* `package.json`
+    * **What it is:** The project's **manifest file**. It defines dependencies (like Electron), scripts (`npm start`), and the application's entry point (`main.js`).
+    * **Interacts with:** It's the first file read by Node.js/NPM to know how to install and run the project.
