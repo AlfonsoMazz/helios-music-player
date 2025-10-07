@@ -63,20 +63,20 @@ This project is built with modern web technologies, packaged as a native, cross-
 You need to have [Node.js](https://nodejs.org/) and npm installed on your system.
 
 1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/your-username/helios.git](https://github.com/your-username/helios.git)
-    cd helios
-    ```
+    
+    git clone [https://github.com/AlfonsoMazz/helios-music-player.git](https://github.com/AlfonsoMazz/helios-music-player.git)
+    cd helios-music-player
+    
 
 2.  **Install dependencies:**
-    ```bash
+    
     npm install
-    ```
+    
 
 3.  **Run the application:**
-    ```bash
+    
     npm start
-    ```
+    
 
 The application will launch in a desktop window. Thanks to `electron-reloader`, any changes you save in the source code will automatically refresh the app.
 
