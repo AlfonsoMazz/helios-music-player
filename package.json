@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/AlfonsoMazz/helios-music-player#readme",
   "devDependencies": {
-    "electron": "^25.2.0",
+    "electron": "^38.3.0",
     "electron-reloader": "^1.2.3"
   }
 }
