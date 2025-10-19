@@ -184,10 +184,15 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
 
     mainContentContainer.innerHTML = `
         <main class="flex-1 bg-gradient-to-b from-gray-800 to-black main-view overflow-y-auto relative">
-            <div id="playlist-header" class="p-6 flex items-end justify-between">
+            <div id="playlist-header" class="px-8 pt-12 pb-6 flex items-end justify-between">
                  <div class="flex items-center space-x-6">
-                    <div id="playlist-cover-container" class="w-48 h-48 bg-gray-700 rounded shadow-lg flex-shrink-0">
-                        <img src="${coverUrl}" alt="Portada de ${name}">
+                    <div id="playlist-cover-container" class="w-48 h-48 bg-gray-700 rounded shadow-lg flex-shrink-0 relative group">
+                        <img src="${coverUrl}" alt="Portada de ${name}" class="group-hover:opacity-70 group-hover:blur-sm transition-all duration-300">
+                        <button id="header-play-btn" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-400 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out hover:scale-110 flex items-center justify-center pl-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" class="w-14 h-14">
+                                <path fill="currentColor" d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80v352c0 17.4 9.4 33.4 24.5 41.9S58.2 482 73 473l288-176c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+                            </svg>
+                        </button>
                     </div>
                     <div class="flex flex-col gap-2">
                         <h2 id="playlist-name" class="text-5xl font-bold text-white"></h2>
@@ -195,7 +200,7 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                     </div>
                 </div>
             </div>
-            <div class="p-6">
+            <div class="px-8 py-6">
                 <div id="playlist-controls" class="mb-4 flex items-center justify-end gap-4 relative">
                     <input type="text" id="search-input" class="bg-gray-700 text-white rounded-full focus:outline-none" spellcheck="false" autocomplete="off">
                     <div id="default-controls" class="flex items-center gap-4">
@@ -214,6 +219,40 @@ export function renderPlaylistView(node, name, path, appState, targetTrackId = n
                 <div id="track-list" class="mt-4">${placeholdersHTML}</div>
             </div>
         </main>`;
+    
+    // --- INICIO DE NUEVA LÓGICA PARA EL BOTÓN DEL HEADER ---
+    const headerPlayBtn = mainContentContainer.querySelector('#header-play-btn');
+    if (headerPlayBtn) {
+        // 1. Lógica de clic
+        headerPlayBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!appState.playerControls || tracksToRender.length === 0) return;
+
+            let trackToPlay;
+            if (appState.isShuffled) {
+                const randomIndex = Math.floor(Math.random() * tracksToRender.length);
+                trackToPlay = tracksToRender[randomIndex];
+            } else {
+                trackToPlay = tracksToRender[0];
+            }
+
+            const originalIndex = appState.viewingContext.originalTracks.findIndex(t => t.id === trackToPlay.id);
+            if (originalIndex !== -1) {
+                appState.playerControls.playTrack(originalIndex);
+            }
+        });
+
+        // 2. Lógica del "Hint" de animación
+        headerPlayBtn.classList.add('animate-hint');
+        
+        // 3. Eliminar la clase de animación después de que termine
+        setTimeout(() => {
+            if (headerPlayBtn) {
+                headerPlayBtn.classList.remove('animate-hint');
+            }
+        }, 1800); // Coincide con la duración de la animación en index.html
+    }
+    // --- FIN DE NUEVA LÓGICA ---
     
     const playlistNameEl = mainContentContainer.querySelector('#playlist-name');
     if (playlistNameEl) playlistNameEl.textContent = name;

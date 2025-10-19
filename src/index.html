@@ -413,6 +413,25 @@
             border: 1px solid rgba(255, 191, 0, 0.5);
         }
         
+        /* --- NUEVAS REGLAS PARA EL BOTÓN DE PLAY DEL HEADER (AJUSTADAS) --- */
+        @keyframes pulse-fade-out {
+            0% {
+                opacity: 0;  /* Inicia transparente */
+            }
+            30% {
+                opacity: 1;  /* Aparece */
+            }
+            70% {
+                opacity: 1;  /* Se mantiene */
+            }
+            100% {
+                opacity: 0;  /* Se desvanece */
+            }
+        }
+        .animate-hint {
+            animation: pulse-fade-out 1.8s ease-out forwards;
+        }
+        /* --- FIN DE NUEVAS REGLAS --- */
 
     </style>
 </head>
